@@ -1400,7 +1400,7 @@ const PPSStack = () => (
 const EventStack = () => (
     <Stack.Navigator>
       <Stack.Screen 
-        name="Eventss" 
+        name="Events" 
         component={CEvents} 
         options={({ navigation }) => ({
           headerStyle: {  
@@ -2087,7 +2087,7 @@ function DrawerNavigator() {
             />
                 <Drawer.Screen
                 name="Events"
-                component={EventsStackNavigator}
+                component={EventStack}
                 options={{
                     headerShown: false,
                     // No drawerLabel option means the label will not be shown
@@ -2426,7 +2426,7 @@ export default function App() {
         options={{ title: 'Program Details' }}
       />
       <Stack.Screen
-        name="CEvents"
+        name="SEvents"
         component={CEvents}
         options={({ navigation }) => ({
           title: 'Events',

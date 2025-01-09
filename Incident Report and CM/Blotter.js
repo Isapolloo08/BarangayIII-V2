@@ -340,7 +340,7 @@ const Blotter = () => {
 
   const pickImageFromGallery = async () => {
     let results = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,

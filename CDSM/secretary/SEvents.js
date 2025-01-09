@@ -15,19 +15,33 @@ const SEvents = () => {
     const fetchPrograms = async () => {
         try {
             const response = await fetch('http://brgyapp.lesterintheclouds.com/kevents.php');
-            const data = await response.json();
-
+            
+            // Get the response as text and log it
+            const text = await response.text();
+            console.log('Raw Response:', text);
+    
+            if (!text) {
+                setError('Received empty response from server');
+                return;
+            }
+    
+            // Try parsing the JSON
+            const data = JSON.parse(text);
+    
+            // Check for server-side errors in the response
             if (data.error) {
                 setError(data.error);
             } else {
                 setItems(data);
             }
         } catch (error) {
+            console.error('Fetch error:', error);
             setError('Error fetching programs');
         } finally {
             setLoading(false);
         }
     };
+    
 
     const handlePress = (programId) => {
         if (programId) {
@@ -38,7 +52,7 @@ const SEvents = () => {
     };
 
     const renderItem = ({ item }) => (
-        <View style={[styles.card, { backgroundColor: getBackgroundColorForType(item.programType) }]}>
+        <View style={[styles.card, { backgroundColor: getBackgroundColorForType(item.programType) }]} >
             <View style={styles.dateContainer}>
                 <Text style={styles.eventTypeText}>{item.programType}</Text>
             </View>

@@ -12,6 +12,7 @@ import {
 import RNPickerSelect from 'react-native-picker-select';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Import FontAwesome icons
+import { printAsync, printToFileAsync } from 'expo-print';
 
 const { width } = Dimensions.get('window');
 
@@ -53,10 +54,82 @@ export default function AuditReports({ navigation }) {
     fetchAuditData();
   }, [selectedFeature]);
 
+   // Printing preview
+    const PrintAudit = async () => {
+    if (filteredData.length === 0) {
+      alert('No data available to print.');
+      return;
+    }
+
+    const htmlTable = `
+    <html>
+      <head>
+        <style>
+          table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: left;
+          }
+          th {
+            background-color: #710808;
+            color: white;
+          }
+          h2 {
+          text-align: center;
+          padding-top: 15px;
+          }
+        </style>
+      </head>
+      <body>
+        <h2>Audit Report</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Audit ID</th>
+              <th>Timestamp</th>
+              <th>Details</th>
+              <th>Feature</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredData
+              .map(item => `
+                <tr>
+                  <td>${item.auditID || 'N/A'}</td>
+                  <td>${item.timestamp || 'N/A'}</td>
+                  <td>${item.details || 'N/A'}</td>
+                  <td>${item.feature || 'N/A'}</td>
+                </tr>
+              `)
+              .join('')}
+          </tbody>
+        </table>
+      </body>
+    </html>
+  `;
+
+  try {
+    const file = await printToFileAsync({
+      html: htmlTable,
+      base64: false,
+    });
+
+    console.log('File created at:', file.uri);
+    await printAsync({ uri: file.uri });
+  } catch (error) {
+    console.error('Error printing audit:', error);
+  }
+};
+
+
   return (
     <View style={styles.container}>
       <View style={styles.featurePickerContainer}>
-        <Text style={styles.featurePickerLabel}>Select Feature:</Text>
+        <Text style={styles.featurePickerLabel}> Select Feature:</Text>
         <RNPickerSelect
           items={availableFeatures.map(feature => ({ label: feature, value: feature }))}
           onValueChange={setSelectedFeature}
@@ -97,10 +170,9 @@ export default function AuditReports({ navigation }) {
       </ScrollView>
 
       <View style={styles.buttonContainer}>
-        {/* Print Button */}
-        <TouchableOpacity
+      <TouchableOpacity
           style={styles.printButton}
-          onPress={() => console.log('Print functionality triggered')} // Placeholder print action
+          onPress={PrintAudit} // Trigger Print functionality
         >
           <Icon name="print" size={20} color="#fff" /> {/* FontAwesome Icon for Print */}
           <Text style={styles.buttonText}>Print</Text>

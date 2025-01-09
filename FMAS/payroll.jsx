@@ -4,6 +4,7 @@ import RNPickerSelect from 'react-native-picker-select';
 import axios from 'axios';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from '@react-navigation/native';
+import { printAsync, printToFileAsync } from 'expo-print';
 
 const { width } = Dimensions.get('window');
 
@@ -57,6 +58,80 @@ export default function Payroll() {
     new Date(item.date).getFullYear() === selectedYear &&
     (selectedPosition ? item.official_position === selectedPosition : true)
   );
+
+   //Printing Preview
+   const printPayroll = async () => {
+    if (filteredData.length === 0) {
+      alert('No data available to print.');
+      return;
+    }
+
+  const htmlTable = `
+      <html>
+        <head>
+          <style>
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 15px;
+              text-align: left;
+            }
+            th {
+              background-color: #710808;
+              color: white;
+            }
+            h2 {
+            text-align: center;
+            padding-top: 15px;
+            }
+          </style>
+        </head>
+        <body>
+          <h2>Payroll Data</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Official Position</th>
+                <th>Compensation</th>
+                <th>Salary</th>
+                <th>Deduction</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredData
+                .map(item => `
+                  <tr>
+                    <td>${item.official_position || 'N/A'}</td>
+                    <td>${item.compensation || 'N/A'}</td>
+                    <td>${item.salary || 'N/A'}</td>
+                    <td>${item.deduction || 'N/A'}</td>
+                    <td>${item.date || 'N/A'}</td>
+                  </tr>
+                `)
+                .join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    try {
+      const file = await printToFileAsync({
+        html: htmlTable,
+        base64: false,
+      });
+
+      console.log('File created at:', file.uri);
+      await printAsync({ uri: file.uri });
+    } catch (error) {
+      console.error('Error printing payroll:', error);
+    }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -120,11 +195,10 @@ export default function Payroll() {
 
       {/* Print */}            
       <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.printButton}>
-          <Icon name="print" size={20} color="#fff" />
-          <Text style={styles.addButtonText}>Print</Text>
-        </TouchableOpacity>
+      <TouchableOpacity style={styles.addButton} onPress={printPayroll}>
+      <Icon name="print" size={20} color="#fff" />
+      <Text style={styles.addButtonText}>Print</Text>
+      </TouchableOpacity>
       </View>
     </View>
   );

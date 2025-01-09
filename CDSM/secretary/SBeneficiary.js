@@ -18,16 +18,27 @@ const SBeneficiary = () => {
     const fetchPrograms = async () => {
       try {
         const response = await axios.get('https://brgyapp.lesterintheclouds.com/api/fetch_benef_programs.php');
-        const filteredPrograms = response.data.filter(
-          (program) => ['approved', 'open', 'closed'].includes(program.status.toLowerCase())
-        );
-        setPrograms(filteredPrograms);
+        console.log('Response:', response);
+    
+        // Check if response.data and response.data.programs exist and is an array
+        if (response.data && Array.isArray(response.data.programs)) {
+          const filteredPrograms = response.data.programs.filter(
+            (program) => ['approved', 'open', 'closed'].includes(program.status.toLowerCase())
+          );
+          setPrograms(filteredPrograms);
+        } else {
+          console.error('No programs found in the response or data is not in the expected format.');
+        }
       } catch (error) {
         console.error('Error fetching programs:', error);
       } finally {
         setLoading(false);
       }
     };
+    
+    
+    
+    
 
     fetchPrograms();
   }, []);
