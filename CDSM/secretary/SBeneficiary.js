@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, TextInput } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -18,27 +19,24 @@ const SBeneficiary = () => {
     const fetchPrograms = async () => {
       try {
         const response = await axios.get('https://brgyapp.lesterintheclouds.com/api/fetch_benef_programs.php');
-        console.log('Response:', response);
-    
-        // Check if response.data and response.data.programs exist and is an array
-        if (response.data && Array.isArray(response.data.programs)) {
-          const filteredPrograms = response.data.programs.filter(
-            (program) => ['approved', 'open', 'closed'].includes(program.status.toLowerCase())
+        console.log('API Response:', response.data);
+
+        if (response.data && Array.isArray(response.data)) {
+          const filteredPrograms = response.data.filter(
+            (program) => ['approved', 'open', 'closed'].includes(program.status?.toLowerCase())
           );
           setPrograms(filteredPrograms);
         } else {
-          console.error('No programs found in the response or data is not in the expected format.');
+          console.error('Invalid response format.');
+          Alert.alert('Error', 'Failed to load programs. Please try again.');
         }
       } catch (error) {
         console.error('Error fetching programs:', error);
+        Alert.alert('Error', 'Failed to fetch programs. Please check your network and try again.');
       } finally {
         setLoading(false);
       }
     };
-    
-    
-    
-    
 
     fetchPrograms();
   }, []);
@@ -64,7 +62,7 @@ const SBeneficiary = () => {
   };
 
   const handleSubmit = async () => {
-    if (!beneficiaries || requirements.some(req => !req.trim())) {
+    if (!beneficiaries || requirements.some((req) => !req.trim())) {
       Alert.alert('Error', 'Please fill in all fields and requirements.');
       return;
     }
@@ -92,28 +90,6 @@ const SBeneficiary = () => {
     }
   };
 
-  const handleOpenForAll = async () => {
-    try {
-      await axios.post('https://brgyapp.lesterintheclouds.com/api/update_program_status.php', {
-        programId: currentProgram.id,
-        status: 'closed',
-      });
-
-      Alert.alert('Success', 'Program status updated to Closed.');
-      setModalVisible(false);
-
-      const updatedPrograms = programs.map((program) =>
-        program.id === currentProgram.id
-          ? { ...program, status: 'closed' }
-          : program
-      );
-      setPrograms(updatedPrograms);
-    } catch (error) {
-      console.error('Error updating program status:', error);
-      Alert.alert('Error', 'Failed to update program status.');
-    }
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
@@ -136,9 +112,10 @@ const SBeneficiary = () => {
             .map((program) => (
               <View key={program.id} style={styles.card}>
                 <Text style={styles.cardHeader}>{program.name}</Text>
-                <Text style={styles.cardDescription}>{program.note}</Text>
+                <Text style={styles.cardDescription}>{program.note || 'No description provided.'}</Text>
                 <Text style={styles.date}>
-                  {new Date(program.startDate).toLocaleString()} - {new Date(program.endDate).toLocaleString()}
+                  {program.startDate && new Date(program.startDate).toLocaleString()} -{' '}
+                  {program.endDate && new Date(program.endDate).toLocaleString()}
                 </Text>
 
                 {program.status.toLowerCase() === 'approved' ? (
@@ -198,10 +175,6 @@ const SBeneficiary = () => {
                 <Text style={styles.submitButtonText}>Submit</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.openForAllButton} onPress={handleOpenForAll}>
-                <Text style={styles.openForAllButtonText}>Open for All</Text>
-              </TouchableOpacity>
-
               <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
                 <Text style={styles.cancelButtonText}>Close</Text>
               </TouchableOpacity>
@@ -253,8 +226,6 @@ const styles = StyleSheet.create({
   addRequirementText: { color: '#4caf50', fontWeight: 'bold' },
   submitButton: { backgroundColor: '#4caf50', borderRadius: 5, paddingVertical: 10, alignItems: 'center' },
   submitButtonText: { color: '#fff', fontWeight: 'bold' },
-  openForAllButton: { backgroundColor: '#007BFF', borderRadius: 5, paddingVertical: 10, alignItems: 'center', marginTop: 10 },
-  openForAllButtonText: { color: '#fff', fontWeight: 'bold' },
   cancelButton: { marginTop: 10, backgroundColor: '#a01919', borderRadius: 5, paddingVertical: 10, alignItems: 'center' },
   cancelButtonText: { color: '#fff', fontWeight: 'bold' },
 });

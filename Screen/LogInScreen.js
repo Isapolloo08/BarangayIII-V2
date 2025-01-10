@@ -84,6 +84,10 @@ const LoginScreen = () => {
         setShowPassword(!showPassword);
     };
 
+    const navigateToRegister = () => {
+        navigation.navigate('Register'); // Ensure the name matches the one in your navigator
+    };
+
     return (
         <View style={styles.container}>
             <Image
@@ -113,10 +117,11 @@ const LoginScreen = () => {
             <TouchableOpacity style={styles.button} onPress={handleLogin}>
                 <Text style={styles.buttonText}>Login</Text>
             </TouchableOpacity>
+            <TouchableOpacity  onPress={navigateToRegister} >
             <View style={styles.bottomTextContainer}>
-                <Text style={styles.bottomText}>Forgot Password?</Text>
                 <Text style={styles.bottomText}>Register</Text>
             </View>
+            </TouchableOpacity>
         </View>
     );
 };

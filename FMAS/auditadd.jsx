@@ -18,7 +18,7 @@ export default function AuditAdd({ navigation }) {
   const [feature, setFeature] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const features = ['Budget','Revenue Expense','Payroll','Financial Report']; // Replace with actual features or fetch from the backend
+  const features = ['Budget', 'Revenue Expense', 'Payroll', 'Financial Report']; // Replace with actual features or fetch from the backend
 
   const handleDateChange = (event, selectedDate) => {
     const currentDate = selectedDate || timestamp;
@@ -41,7 +41,9 @@ export default function AuditAdd({ navigation }) {
           feature,
         }
       );
-      if (response.data.success) {
+      
+      // Adjusted response check to match backend response structure
+      if (response.data.status === 'success') {
         Alert.alert('Success', 'Audit record added successfully!');
         navigation.goBack();
       } else {

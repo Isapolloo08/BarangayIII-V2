@@ -210,11 +210,18 @@ const CustomDrawerContent = (props) => {
                 <Text style={styles.drawerSubItemText}>Blotter Form</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-              onPress={() => props.navigation.navigate('BlotterList')} 
-              style={[styles.drawerSubItem, disableForRoles([ 'kagawad', 'secretary', 'kapitan']) && styles.disabledItem]}
-                disabled={disableForRoles([ 'kagawad', 'secretary', 'kapitan'])}>
-              <Awsome6 name={'table-list'} size={24} color="white" />
-                <Text style={styles.drawerSubItemText}>Blotter List</Text>
+                onPress={() => props.navigation.navigate('BlotterList')} 
+                style={[styles.drawerSubItem, disableForRoles([ 'kagawad', 'secretary', 'kapitan']) && styles.disabledItem]}
+                  disabled={disableForRoles([ 'kagawad', 'secretary', 'kapitan'])}>
+                <Awsome6 name={'table-list'} size={24} color="white" />
+                  <Text style={styles.drawerSubItemText}>Blotter List</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => props.navigation.navigate('CaseList')} 
+                style={[styles.drawerSubItem, disableForRoles([ 'kagawad', 'secretary', 'kapitan']) && styles.disabledItem]}
+                  disabled={disableForRoles([ 'kagawad', 'secretary', 'kapitan'])}>
+                <Awsome6 name={'table-list'} size={24} color="white" />
+                  <Text style={styles.drawerSubItemText}>Case List</Text>
               </TouchableOpacity>
               <TouchableOpacity 
               onPress={() => props.navigation.navigate('CaseReport')} 
@@ -230,6 +237,13 @@ const CustomDrawerContent = (props) => {
                 <Material name={'schedule'} size={24} color={'white'} /> 
                 <Text style={styles.drawerSubItemText}>Summon Schedule/{'\n'}Calendar</Text>
               </TouchableOpacity>
+              <TouchableOpacity 
+              onPress={() => props.navigation.navigate('Notification_IRCM')} 
+              style={[styles.drawerSubItem, disableForRoles(['resident', 'secretary', 'kapitan']) && styles.disabledItem]}
+                disabled={disableForRoles(['resident', 'secretary', 'kapitan'])}>
+                <Material name={'schedule'} size={24} color={'white'} /> 
+                <Text style={styles.drawerSubItemText}>Notification</Text>
+              </TouchableOpacity>
             </View>
           )}
           <TouchableOpacity
@@ -243,12 +257,7 @@ const CustomDrawerContent = (props) => {
           </TouchableOpacity>
           {expandedItems.includes('Community Development') && (
             <View style={styles.subMenu}>
-              <TouchableOpacity 
-              onPress={() => props.navigation.navigate('Dashboard')} 
-              style={[styles.drawerSubItem, disableForRoles(['kapitan']) && styles.disabledItem]}
-                disabled={disableForRoles(['kapitan'])}>
-                <Text style={styles.drawerSubItemText}>Dashboard</Text>
-              </TouchableOpacity>
+              
               <TouchableOpacity 
                 onPress={() => toggleNestedSubMenu('Program Planning and Scheduling')} 
                 style={[styles.drawerSubItem, disableForRoles(['kagawad', 'secretary', 'kapitan']) && styles.disabledItem]}

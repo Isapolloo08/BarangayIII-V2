@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import axios from 'axios';
 
@@ -27,38 +28,42 @@ export default function EventsResidents({ navigation }) {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await axios.get('https://brgyapp.lesterintheclouds.com/api/fetch_approved_programs.php');
-        if (response.data.status === 'success') {
-          const processedEvents = response.data.data
+        const response = await axios.get('https://brgyapp.lesterintheclouds.com/get_programs.php');
+        if (Array.isArray(response.data)) {
+          const now = new Date(); // Current date and time
+          const processedEvents = response.data
             .map((event) => ({
               ...event,
-              startFormatted: formatDateTime(event.start),
-              endFormatted: formatDateTime(event.end),
+              startDate: new Date(event.startDate), // Parse startDate as Date object
+              endDate: new Date(event.endDate), // Parse endDate as Date object
+              startFormatted: formatDateTime(event.startDate),
+              endFormatted: formatDateTime(event.endDate),
             }))
-            .sort((a, b) => new Date(a.start) - new Date(b.start));
-  
+            .filter((event) => event.startDate >= now) // Filter out past events
+            .sort((a, b) => a.startDate - b.startDate); // Sort by startDate in ascending order
           setAllEvents(processedEvents);
           setEvents(processedEvents);
         } else {
-          console.error('Fetch events failed:', response.data);
-          const errorMessage = response.data.message || 'Unknown error occurred.';
-          Alert.alert('Error', `Failed to fetch events: ${errorMessage}`);
+          Alert.alert('Error', 'Invalid API response format.');
         }
       } catch (error) {
         console.error('Error fetching events:', error);
         Alert.alert('Error', 'Failed to fetch events. Please try again later.');
       }
     };
-  
+
     fetchEvents();
   }, []);
-  
 
   const handleDateSelect = (day) => {
     setSelectedDate(day.dateString);
     const filteredEvents = allEvents.filter((event) => {
-      const eventDate = event.start.split(' ')[0];
-      return eventDate === day.dateString;
+      if (event.startDate instanceof Date && !isNaN(event.startDate)) {
+        const eventDate = event.startDate.toISOString().split('T')[0];
+        return eventDate === day.dateString;
+      }
+      console.warn(`Invalid startDate for event:`, event);
+      return false;
     });
     setEvents(filteredEvents);
   };
@@ -69,79 +74,81 @@ export default function EventsResidents({ navigation }) {
   };
 
   const markedDates = allEvents.reduce((acc, event) => {
-    const datePart = event.start.split(' ')[0];
-    if (datePart) {
+    if (event.startDate instanceof Date && !isNaN(event.startDate)) {
+      const datePart = event.startDate.toISOString().split('T')[0];
       acc[datePart] = { marked: true, dotColor: '#7B0A0A' };
+    } else {
+      console.warn(`Invalid startDate for marking:`, event);
     }
     return acc;
   }, { [selectedDate || today]: { selected: true, selectedColor: '#7B0A0A' } });
 
   return (
-    <FlatList
-      style={styles.container}
-      data={events}
-      keyExtractor={(item) => item.id?.toString()}
-      renderItem={({ item }) => {
-        const isSameDate = item.startFormatted.fullDate === item.endFormatted.fullDate;
+    <ScrollView style={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Calendar</Text>
+        <Calendar
+          onDayPress={handleDateSelect}
+          markedDates={markedDates}
+          theme={{
+            selectedDayBackgroundColor: '#7B0A0A',
+            todayTextColor: '#7B0A0A',
+            arrowColor: '#7B0A0A',
+            dayTextColor: '#3B3B3B',
+            selectedDayTextColor: '#FFFFFF',
+          }}
+        />
+      </View>
 
-        return (
-          <TouchableOpacity
-            style={styles.eventContainer}
-            onPress={() => navigation.navigate('EventOverview', { event: item })}
-          >
-            <View style={styles.dateContainer}>
-              <Text style={styles.dateDay}>{item.startFormatted.day}</Text>
-              <Text style={styles.dateMonth}>{item.startFormatted.month}</Text>
-            </View>
-            <View style={styles.detailsContainer}>
-              <Text style={styles.eventTitle}>{item.title}</Text>
-              <Text style={styles.eventDetail}>
-                <Text style={styles.bold}>WHEN: </Text>
-                {isSameDate
-                  ? `${item.startFormatted.fullDate}, ${item.startFormatted.time} - ${item.endFormatted.time}`
-                  : `${item.startFormatted.fullDate}, ${item.startFormatted.time} - ${item.endFormatted.fullDate}, ${item.endFormatted.time}`}
-              </Text>
-              <Text style={styles.eventDetail}>
-                <Text style={styles.bold}>WHERE: </Text>
-                {item.location}
-              </Text>
-              <Text style={styles.eventDetail}>
-                <Text style={styles.bold}>STATUS: </Text>
-                {item.status}
-              </Text>
-              <Text style={styles.seeDetails}>See details</Text>
-            </View>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>{selectedDate ? `Events on ${selectedDate}` : 'Upcoming Events'}</Text>
+
+        {selectedDate && (
+          <TouchableOpacity style={styles.backButton} onPress={handleBackToDefault}>
+            <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
-        );
-      }}
-      ListHeaderComponent={
-        <View>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Calendar</Text>
-            <Calendar
-              onDayPress={handleDateSelect}
-              markedDates={markedDates}
-              theme={{
-                selectedDayBackgroundColor: '#7B0A0A',
-                todayTextColor: '#7B0A0A',
-                arrowColor: '#7B0A0A',
-                dayTextColor: '#3B3B3B',
-                selectedDayTextColor: '#FFFFFF',
-              }}
-            />
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>{selectedDate ? `Events on ${selectedDate}` : 'Upcoming Events'}</Text>
-            {selectedDate && (
-              <TouchableOpacity style={styles.backButton} onPress={handleBackToDefault}>
-                <Text style={styles.backButtonText}>← Back</Text>
+        )}
+
+        <FlatList
+          data={events}
+          keyExtractor={(item) => item.programId.toString()}
+          renderItem={({ item }) => {
+            const isSameDate = item.startFormatted.fullDate === item.endFormatted.fullDate;
+
+            return (
+              <TouchableOpacity
+                style={styles.eventContainer}
+                onPress={() => navigation.navigate('EventOverview', { event: item })}
+              >
+                <View style={styles.dateContainer}>
+                  <Text style={styles.dateDay}>{item.startFormatted.day}</Text>
+                  <Text style={styles.dateMonth}>{item.startFormatted.month}</Text>
+                </View>
+                <View style={styles.detailsContainer}>
+                  <Text style={styles.eventTitle}>{item.programName}</Text>
+                  <Text style={styles.eventDetail}>
+                    <Text style={styles.bold}>WHEN: </Text>
+                    {isSameDate
+                      ? `${item.startFormatted.fullDate}, ${item.startFormatted.time} - ${item.endFormatted.time}`
+                      : `${item.startFormatted.fullDate}, ${item.startFormatted.time} - ${item.endFormatted.fullDate}, ${item.endFormatted.time}`}
+                  </Text>
+                  <Text style={styles.eventDetail}>
+                    <Text style={styles.bold}>WHERE: </Text>
+                    {item.location}
+                  </Text>
+                  <Text style={styles.eventDetail}>
+                    <Text style={styles.bold}>STATUS: </Text>
+                    {item.status}
+                  </Text>
+                  <Text style={styles.seeDetails}>See details</Text>
+                </View>
               </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      }
-      ListEmptyComponent={<Text style={styles.noEventText}>No events scheduled for this date.</Text>}
-    />
+            );
+          }}
+          ListEmptyComponent={<Text style={styles.noEventText}>No events scheduled for this date.</Text>}
+        />
+      </View>
+    </ScrollView>
   );
 }
 

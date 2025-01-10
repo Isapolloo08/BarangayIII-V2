@@ -54,76 +54,81 @@ export default function AuditReports({ navigation }) {
     fetchAuditData();
   }, [selectedFeature]);
 
-   // Printing preview
-    const PrintAudit = async () => {
+  const PrintAudit = async () => {
+    // Apply filtering based on selected feature
+    const filteredData = auditData.filter(item =>
+      selectedFeature ? item.feature === selectedFeature : true
+    );
+  
     if (filteredData.length === 0) {
       alert('No data available to print.');
       return;
     }
-
+  
     const htmlTable = `
-    <html>
-      <head>
-        <style>
-          table {
-            width: 100%;
-            border-collapse: collapse;
-          }
-          th, td {
-            border: 1px solid #ddd;
-            padding: 15px;
-            text-align: left;
-          }
-          th {
-            background-color: #710808;
-            color: white;
-          }
-          h2 {
-          text-align: center;
-          padding-top: 15px;
-          }
-        </style>
-      </head>
-      <body>
-        <h2>Audit Report</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Audit ID</th>
-              <th>Timestamp</th>
-              <th>Details</th>
-              <th>Feature</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filteredData
-              .map(item => `
-                <tr>
-                  <td>${item.auditID || 'N/A'}</td>
-                  <td>${item.timestamp || 'N/A'}</td>
-                  <td>${item.details || 'N/A'}</td>
-                  <td>${item.feature || 'N/A'}</td>
-                </tr>
-              `)
-              .join('')}
-          </tbody>
-        </table>
-      </body>
-    </html>
-  `;
-
-  try {
-    const file = await printToFileAsync({
-      html: htmlTable,
-      base64: false,
-    });
-
-    console.log('File created at:', file.uri);
-    await printAsync({ uri: file.uri });
-  } catch (error) {
-    console.error('Error printing audit:', error);
-  }
-};
+      <html>
+        <head>
+          <style>
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 15px;
+              text-align: left;
+            }
+            th {
+              background-color: #710808;
+              color: white;
+            }
+            h2 {
+              text-align: center;
+              padding-top: 15px;
+            }
+          </style>
+        </head>
+        <body>
+          <h2>Audit Report</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Audit ID</th>
+                <th>Timestamp</th>
+                <th>Details</th>
+                <th>Feature</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredData
+                .map(item => `
+                  <tr>
+                    <td>${item.auditID || 'N/A'}</td>
+                    <td>${item.timestamp || 'N/A'}</td>
+                    <td>${item.details || 'N/A'}</td>
+                    <td>${item.feature || 'N/A'}</td>
+                  </tr>
+                `)
+                .join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+  
+    try {
+      const file = await printToFileAsync({
+        html: htmlTable,
+        base64: false,
+      });
+  
+      console.log('File created at:', file.uri);
+      await printAsync({ uri: file.uri });
+    } catch (error) {
+      console.error('Error printing audit:', error);
+    }
+  };
+  
 
 
   return (
