@@ -5,7 +5,7 @@ import axios from 'axios';
 
 // Helper function to extract year from date string
 const extractYear = (dateString) => {
-  const yearMatch = dateString.match(/\b\d{4}\b/); // Matches any 4-digit year
+  const yearMatch = dateString?.match(/\b\d{4}\b/); // Matches any 4-digit year
   return yearMatch ? parseInt(yearMatch[0], 10) : NaN;
 };
 
@@ -16,7 +16,7 @@ const toValidNumber = (value) => {
 };
 
 const SFunds = ({ route }) => {
-  const { year, totalBudget } = route.params; // Get the year and total budget
+  const { year, totalBudget = 0 } = route.params; // Ensure totalBudget has a default value
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,50 +28,52 @@ const SFunds = ({ route }) => {
       try {
         // Fetch approved programs from the API
         const response = await axios.get('http://brgyapp.lesterintheclouds.com/kfunds.php', {
-          params: { status: 'Approved' }
+          params: { status: 'Approved' },
         });
-        const programs = response.data;
+        const programs = response.data || []; // Default to empty array if no data
 
         // Filter programs to include only those from the specified year
-        const programsInYear = programs.filter(program => {
+        const programsInYear = programs.filter((program) => {
           const startYear = extractYear(program.startDate);
           const endYear = extractYear(program.endDate);
           return startYear === year || endYear === year;
         });
 
         // Fetch materials and expenses for each program
-        const programsWithDetails = await Promise.all(programsInYear.map(async (program) => {
-          try {
-            // Fetch materials
-            const materialsResponse = await axios.get('http://brgyapp.lesterintheclouds.com/kfunds.php', {
-              params: { programId: program.programId, type: 'materials' }
-            });
-            const materialsList = Array.isArray(materialsResponse.data) ? materialsResponse.data : [];
+        const programsWithDetails = await Promise.all(
+          programsInYear.map(async (program) => {
+            try {
+              // Fetch materials
+              const materialsResponse = await axios.get('http://brgyapp.lesterintheclouds.com/kfunds.php', {
+                params: { programId: program.programId, type: 'materials' },
+              });
+              const materialsList = Array.isArray(materialsResponse.data) ? materialsResponse.data : [];
 
-            // Fetch expenses
-            const expensesResponse = await axios.get('http://brgyapp.lesterintheclouds.com/kfunds.php', {
-              params: { programId: program.programId, type: 'expenses' }
-            });
-            const expensesList = Array.isArray(expensesResponse.data) ? expensesResponse.data : [];
+              // Fetch expenses
+              const expensesResponse = await axios.get('http://brgyapp.lesterintheclouds.com/kfunds.php', {
+                params: { programId: program.programId, type: 'expenses' },
+              });
+              const expensesList = Array.isArray(expensesResponse.data) ? expensesResponse.data : [];
 
-            // Calculate totals
-            const totalMaterialsFunds = materialsList.reduce((total, material) => total + toValidNumber(material.allocation), 0);
-            const totalOtherExpensesFunds = expensesList.reduce((total, expense) => total + toValidNumber(expense.allocation), 0);
+              // Calculate totals
+              const totalMaterialsFunds = materialsList.reduce((total, material) => total + toValidNumber(material.allocation), 0);
+              const totalOtherExpensesFunds = expensesList.reduce((total, expense) => total + toValidNumber(expense.allocation), 0);
 
-            // Calculate total allocation and percentage
-            const totalAllocation = totalMaterialsFunds + totalOtherExpensesFunds;
-            const percentage = ((totalAllocation / totalBudget) * 100).toFixed(2);
+              // Calculate total allocation and percentage
+              const totalAllocation = totalMaterialsFunds + totalOtherExpensesFunds;
+              const percentage = totalBudget > 0 ? ((totalAllocation / totalBudget) * 100).toFixed(2) : '0.00';
 
-            return {
-              ...program,
-              totalAllocation,
-              percentage,
-            };
-          } catch (error) {
-            console.error(`Error fetching details for program ${program.programId}:`, error);
-            return { ...program, totalAllocation: 0, percentage: '0.00' };
-          }
-        }));
+              return {
+                ...program,
+                totalAllocation,
+                percentage,
+              };
+            } catch (error) {
+              console.error(`Error fetching details for program ${program.programId}:`, error);
+              return { ...program, totalAllocation: 0, percentage: '0.00' };
+            }
+          })
+        );
 
         setData(programsWithDetails);
         setFilteredData(programsWithDetails);
@@ -86,17 +88,17 @@ const SFunds = ({ route }) => {
   }, [year, totalBudget]);
 
   const handleSearch = () => {
-    const filteredData = data.filter(item =>
-      item.programName.toLowerCase().includes(searchQuery.toLowerCase())
+    const filtered = data.filter((item) =>
+      item.programName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    setFilteredData(filteredData);
+    setFilteredData(filtered);
   };
 
   useEffect(() => {
     handleSearch();
   }, [searchQuery]);
 
-  const totalFundAllocation = filteredData.reduce((total, item) => total + item.totalAllocation, 0);
+  const totalFundAllocation = filteredData.reduce((total, item) => total + toValidNumber(item.totalAllocation), 0);
   const remainingBudget = totalBudget - totalFundAllocation;
 
   if (loading) {
@@ -127,9 +129,18 @@ const SFunds = ({ route }) => {
         <Button title="Search" onPress={handleSearch} color="#710808" />
       </View>
       <Text style={styles.header}>Budget Utilization for {year}</Text>
-      <Text style={styles.budget}>Total Budget: ₱{totalBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
-      <Text style={styles.budget}>Total Fund Allocation: ₱{totalFundAllocation.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
-      <Text style={styles.budget}>Remaining Budget: ₱{remainingBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</Text>
+      <Text style={styles.budget}>
+        Total Budget: ₱
+        {totalBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      </Text>
+      <Text style={styles.budget}>
+        Total Fund Allocation: ₱
+        {totalFundAllocation.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      </Text>
+      <Text style={styles.budget}>
+        Remaining Budget: ₱
+        {remainingBudget.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+      </Text>
       <View style={styles.tableContainer}>
         {/* Table header */}
         <View style={styles.tableHeader}>
@@ -155,17 +166,20 @@ const SFunds = ({ route }) => {
                 index % 2 !== 0 && styles.tableRowOdd,
               ]}
             >
-              <Text style={[styles.tableCell, { flex: 2 }]}>{item.programName}</Text>
+              <Text style={[styles.tableCell, { flex: 2 }]}>{item.programName || 'N/A'}</Text>
               <View style={styles.separator} />
               <Text style={[styles.tableCell, { flex: 1 }]}>
-                {item.totalAllocation.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 'N/A'}
+                {toValidNumber(item.totalAllocation).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </Text>
               <View style={styles.separator} />
               <Text style={[styles.tableCell, { flex: 1 }]}>{item.percentage}%</Text>
               <View style={styles.separator} />
-              <Text style={[styles.tableCell, { flex: 2 }]}>{item.startDate}</Text>
+              <Text style={[styles.tableCell, { flex: 2 }]}>{item.startDate || 'N/A'}</Text>
               <View style={styles.separator} />
-              <Text style={[styles.tableCell, { flex: 2 }]}>{item.endDate}</Text>
+              <Text style={[styles.tableCell, { flex: 2 }]}>{item.endDate || 'N/A'}</Text>
             </View>
           )}
         />
