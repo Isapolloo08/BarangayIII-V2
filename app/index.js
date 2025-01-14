@@ -2343,6 +2343,8 @@ function DrawerNavigator() {
     );
 }
 
+
+
 export default function App() {
     return (
         
@@ -2566,6 +2568,11 @@ export default function App() {
                 })}
             />
              <Stack.Screen name="Notification_IRCM" component={Notification} />
+      <Stack.Screen
+        name="SeeMore"
+        component={SeeMore}
+        options={{ title: 'Beneficiary Details' }}
+        />
       <Stack.Screen
       name="DetailedView"
         component={DetailedView}
