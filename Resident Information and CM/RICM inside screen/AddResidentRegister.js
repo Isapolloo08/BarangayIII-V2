@@ -1,8 +1,11 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
-import { Alert, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Image, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import Icon from 'react-native-vector-icons/Ionicons';
 import Pagination from './Pagination'; // Adjust the path if necessary
+import axios from 'axios';
 
 const AddResidentRegister = ({ navigation, route }) => {
     const { addNewResident } = route.params;
@@ -81,6 +84,7 @@ const AddResidentRegister = ({ navigation, route }) => {
     const [isTypeOfWaterSourceDropdownOpen, setIsTypeOfWaterSourceDropdownOpen] = useState(false);
     const [typeOfToiletFacility, setTypeOfToiletFacility] = useState('');
     const [isTypeOfToiletFacilityDropdownOpen, setIsTypeOfToiletFacilityDropdownOpen] = useState(false);
+    const [image, setImage] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [showError, setShowError] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -130,11 +134,89 @@ const AddResidentRegister = ({ navigation, route }) => {
         return true;
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (validateFields()) {
             setIsSaveModalVisible(true);
+            
+            // Prepare the form data
+            const formData = new FormData();
+            formData.append('household_head', isHouseholdHead);
+            formData.append('household_number', householdNumber);
+            formData.append('household_head_name', householdHeadName);
+            formData.append('relationship', relationship);
+            formData.append('selected_value', selectedValue);
+            formData.append('last_name', lastName);
+            formData.append('first_name', firstName);
+            formData.append('middle_name', middleName);
+            formData.append('suffix', suffix);
+            formData.append('contact_number', contactNumber);
+            formData.append('region', region);
+            formData.append('province', province);
+            formData.append('municipality', municipality);
+            formData.append('purok', purok);
+            formData.append('barangay', barangay);
+            formData.append('other_barangay', otherBarangay);
+            formData.append('date_of_birth', dateOfBirth.toISOString());
+            formData.append('birth_place', birthPlace);
+            formData.append('age', age);
+            formData.append('sex', sex);
+            formData.append('civil_status', civilStatus);
+            formData.append('citizenship', citizenship);
+            formData.append('other_citizenship', otherCitizenship);
+            formData.append('occupation', occupation);
+            formData.append('other_occupation', otherOccupation);
+            formData.append('educational_attainment', educationalAttainment);
+            formData.append('religion', religion);
+            formData.append('other_religion', otherReligion);
+            formData.append('ethnicity', ethnicity);
+            formData.append('ps_member', psMember);
+            formData.append('ps_household_id', psHouseholdId);
+            formData.append('philhealth_member', philhealthMember);
+            formData.append('philhealth_id_number', philhealthIdNumber);
+            formData.append('membership_type', membershipType);
+            formData.append('classification_by_age_health', classificationByAgeHealth);
+            formData.append('lmp', lmp);
+            formData.append('medical_history', medicalHistory);
+            formData.append('other_medical_history', otherMedicalHistory);
+            formData.append('philhealth_category', philhealthCategory);
+            formData.append('using_fp_method', usingFpMethod);
+            formData.append('family_planning_method_used', familyPlanningMethodUsed);
+            formData.append('other_family_planning_method_used', otherFamilyPlanningMethodUsed);
+            formData.append('family_planning_status', familyPlanningStatus);
+            formData.append('type_of_water_source', typeOfWaterSource);
+            formData.append('type_of_toilet_facility', typeOfToiletFacility);
+            
+            // Handle the image upload (if any)
+            if (image) {
+                const imageData = {
+                    uri: image.uri,
+                    type: 'image/jpeg',
+                    name: 'resident_image.jpg',
+                };
+                formData.append('image', imageData);
+            }
+    
+            try {
+                // Send the data to your backend
+                const response = await axios.post('http://brgyapp.lesterintheclouds.com/add_resident_register.php', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                
+                if (response.data.success) {
+                    Alert.alert('Success', 'Resident successfully registered!');
+                    // Optionally reset form or navigate
+                    navigation.goBack(); // Or use your own navigation flow
+                } else {
+                    Alert.alert('Error', response.data.message || 'An error occurred while saving the data');
+                }
+            } catch (error) {
+                console.error(error);
+                Alert.alert('Error', 'An error occurred while communicating with the server');
+            }
         } else {
-            Alert.alert('Error', 'Please fill in all the require (*) information');
+            Alert.alert('Error', 'Please fill in all the required (*) fields and upload an image');
             setShowError(true);
         }
     };
@@ -186,6 +268,7 @@ const AddResidentRegister = ({ navigation, route }) => {
             classificationByAgeHealth,
             typeOfWaterSource,
             typeOfToiletFacility,
+            image,
         };
         addNewResident(newResident);
         navigation.goBack();
@@ -518,6 +601,69 @@ const AddResidentRegister = ({ navigation, route }) => {
         setTypeOfToiletFacility(item);
         setIsTypeOfToiletFacilityDropdownOpen(false);
     }; 
+
+    const handleImagePick = async () => {
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (permissionResult.granted === false) {
+          alert('Permission to access camera roll is required!');
+          return;
+        }
+    
+        const options = {
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 1,
+        };
+    
+        try {
+          let result = await ImagePicker.launchImageLibraryAsync(options);
+          if (result.cancelled) {
+            return; // Do nothing if user cancels choosing photo
+          }
+    
+          // On Android, the URI may be different if using `ImagePicker.MediaTypeOptions.All`
+          if (Platform.OS === 'android' && !result.uri.includes('file://')) {
+            result.uri = `file://${result.uri}`;
+          }
+    
+          setImage(result.uri); // Update image state with selected image URI
+          setShowModal(true); // Show modal to preview image
+        } catch (error) {
+          console.log('Error picking image: ', error);
+        }
+    };
+    
+    const takePhoto = async () => {
+        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+        if (permissionResult.granted === false) {
+          alert('Permission to access camera roll is required!');
+          return;
+        }
+    
+        const options = {
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 1,
+        };
+    
+        try {
+          let result = await ImagePicker.launchCameraAsync(options);
+          if (result.cancelled) {
+            return; // Do nothing if user cancels taking photo
+          }
+    
+          // On Android, the URI may be different if using `ImagePicker.MediaTypeOptions.All`
+          if (Platform.OS === 'android' && !result.uri.includes('file://')) {
+            result.uri = `file://${result.uri}`;
+          }
+    
+          setImage(result.uri); // Update image state with taken photo URI
+          setShowModal(true); // Show modal to preview image
+        } catch (error) {
+          console.log('Error taking photo: ', error);
+        }
+    };
     
     const handleModalClose = () => {
         setShowModal(false);
@@ -611,6 +757,35 @@ const AddResidentRegister = ({ navigation, route }) => {
     return (
         <KeyboardAwareScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
             <View style={styles.container}>
+                {/* Image Frame */}
+                <View style={styles.imageContainer}>
+                    <View style={styles.imageFrame}>
+                    {image ? (
+                        <Image source={{ uri: image }} style={styles.image} />
+                    ) : (
+                        <View style={styles.defaultImage}>
+                        <Text style={styles.imagePlaceholder}>Add Photo</Text>
+                        </View>
+                    )}
+                    {/* Camera Icon */}
+                    <TouchableOpacity style={styles.cameraIcon} onPress={() => setShowDropdown(!showDropdown)}>
+                        <Icon name="camera" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                    {/* Dropdown for Choose Photo and Take Photo */}
+                    {showDropdown && (
+                        <View style={styles.dropdownMenu1}>
+                        <TouchableOpacity style={styles.dropdownOption1} onPress={handleImagePick}>
+                            <Icon name="images" size={20} color="#000000" style={styles.dropdownIcon1} />
+                            <Text style={styles.dropdownText1}>Choose Photo</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.dropdownOption1} onPress={takePhoto}>
+                            <Icon name="camera" size={20} color="#000000" style={styles.dropdownIcon1} />
+                            <Text style={styles.dropdownText}>Take Photo</Text>
+                        </TouchableOpacity>
+                        </View>
+                    )}
+                    </View>
+                </View>
                 <View style={styles.box}>
                     {currentPage === 1 && (
                         <>
@@ -1617,8 +1792,18 @@ const AddResidentRegister = ({ navigation, route }) => {
 
                     {/* Error Message */}
                     {showError && (
-                        <Text style={styles.errorText}>Please fill in all the required (*) information.</Text>
+                        <Text style={styles.errorText}>Please fill in all the required (*) information and upload an image.</Text>
                     )}
+
+                    {/* Modal for Previewing Image */}
+                    <Modal visible={showModal} animationType="slide" transparent={true}>
+                        <View style={styles.modalContainer1}>
+                        <Image source={{ uri: image }} style={styles.modalImage} />
+                        <TouchableOpacity style={styles.modalButton1} onPress={handleModalClose}>
+                            <Text style={styles.modalButtonText1}>Cancel</Text>
+                        </TouchableOpacity>
+                        </View>
+                    </Modal>
 
                     <Pagination
                         totalPages={totalPages}
@@ -1731,6 +1916,45 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: 'justify',
     },
+    imageContainer: {
+    alignItems: 'center',
+    },
+    imageFrame: {
+        width: 200,
+        height: 200,
+        borderRadius: 100,
+        borderColor: '#000000',
+        borderWidth: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+        position: 'relative',
+    },
+    image: {
+        width: 196,
+        height: 196,
+        borderRadius: 98,
+    },
+    defaultImage: {
+        width: 196,
+        height: 196,
+        borderRadius: 98,
+        backgroundColor: '#cccccc',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    imagePlaceholder: {
+        fontSize: 16,
+        color: '#ffffff',
+    },
+    cameraIcon: {
+        position: 'absolute',
+        bottom: 5,
+        right: 5,
+        backgroundColor: '#000000',
+        padding: 8,
+        borderRadius: 20,
+    },
     dropdownButton1: {
         marginTop: 10,
         flexDirection: 'row',
@@ -1763,6 +1987,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    },
+    modalImage: {
+        width: '80%',
+        height: '80%',
+        resizeMode: 'contain',
     },
     modalButton1: {
         marginTop: 20,

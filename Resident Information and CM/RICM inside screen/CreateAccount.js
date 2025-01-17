@@ -1,42 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 const CreateAccount = (props) => {
     const { navigation } = props;
+    const { userIDs } = props.route.params;
 
     const [regUsername, setRegUsername] = useState('');
     const [regPassword, setRegPassword] = useState('');
+    const [regRole, setRegRole] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const handleAccount = () => {
-        if (regUsername !== '' && regPassword !== '' && confirmPassword !== '') {
-            if (regPassword === confirmPassword) {
-                axios.post('http://brgyapp.lesterintheclouds.com/createUsers.php', {
-                    regUsername, regPassword
-                })
-                .then(response => {
-                    if(response.data.success){
-                        Alert.alert('Succesful', response.data.message);
-                    }
-                    else{  
-                    }
-                })
-                .catch(error => {
-                    Alert.alert('Failedss', 'Failed to add.');
-                })
-                // Navigate to the appropriate screen after successful registration
-                navigation.navigate('LogIn'); // Replace 'LogInScreen' with your desired screen name
-            } else {
-                Alert.alert('Error', 'Passwords do not match!');
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            try {
+                const response = await axios.post("http://brgyapp.lesterintheclouds.com/getUserInfo.php", {userIDs});
+                if (response.data.success) {
+                    setRegUsername(response.data.username);
+                    setRegPassword(response.data.password);
+                    setRegRole(response.data.role);
+                }
+                else{
+                    console.log('labas');
+                }
+            } catch (error) {
+                console.error('Error response:', error.response);
             }
-        } else {
-            Alert.alert('Error', 'All fields are required!');
         }
-    };
+
+        fetchUserInfo();
+    }, [userIDs]);
+
+    const handleAccount = () => {
+        navigation.navigate('LogIn');
+    }
+
+    // const handleAccount = () => {
+    //     if (regUsername !== '' && regPassword !== '' && confirmPassword !== '') {
+    //         if (regPassword === confirmPassword) {
+    //             axios.post('http://brgyapp.lesterintheclouds.com/createUsers.php', {
+    //                 regUsername, regPassword
+    //             })
+    //             .then(response => {
+    //                 if(response.data.success){
+    //                     Alert.alert('Succesful', response.data.message);
+    //                 }
+    //                 else{  
+    //                 }
+    //             })
+    //             .catch(error => {
+    //                 Alert.alert('Failedss', 'Failed to add.');
+    //             })
+    //             // Navigate to the appropriate screen after successful registration
+    //             navigation.navigate('LogIn');
+    //         } else {
+    //             Alert.alert('Error', 'Passwords do not match!');
+    //         }
+    //     } else {
+    //         Alert.alert('Error', 'All fields are required!');
+    //     }
+    // };
 
     return (
         <View style={styles.container}>
@@ -48,6 +74,7 @@ const CreateAccount = (props) => {
                     placeholder="Username"
                     value={regUsername}
                     onChangeText={setRegUsername}
+                    editable={false}
                 />
                 <Text style={styles.label}>Password</Text>
                 <View style={styles.passwordContainer}>
@@ -56,16 +83,17 @@ const CreateAccount = (props) => {
                         placeholder="Password"
                         value={regPassword}
                         onChangeText={setRegPassword}
-                        secureTextEntry={!showPassword}
+                        secureTextEntry={showPassword}
+                        editable={false}
                     />
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={styles.showPasswordButton}
                         onPress={() => setShowPassword(!showPassword)}
                     >
                         <Icon name={showPassword ? 'eye' : 'eye-off'} size={20} color="#9B9393" />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
-                <Text style={styles.label}>Confirm Password</Text>
+                {/* <Text style={styles.label}>Confirm Password</Text>
                 <View style={styles.passwordContainer}>
                     <TextInput
                         style={styles.inputPassword}
@@ -73,6 +101,7 @@ const CreateAccount = (props) => {
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
                         secureTextEntry={!showConfirmPassword}
+                        editable={false}
                     />
                     <TouchableOpacity
                         style={styles.showPasswordButton}
@@ -80,9 +109,9 @@ const CreateAccount = (props) => {
                     >
                         <Icon name={showConfirmPassword ? 'eye' : 'eye-off'} size={20} color="#9B9393" />
                     </TouchableOpacity>
-                </View>
+                </View> */}
                 <TouchableOpacity style={styles.button} onPress={handleAccount}>
-                    <Text style={styles.buttonText}>REGISTER</Text>
+                    <Text style={styles.buttonText}>Okay</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -127,6 +156,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         marginBottom: 20,
         backgroundColor: '#E8E8E8',
+        textAlign: 'center'
     },
     passwordContainer: {
         flexDirection: 'row',
@@ -142,6 +172,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         paddingHorizontal: 10,
         backgroundColor: '#E8E8E8',
+        textAlign: 'center'
     },
     showPasswordButton: {
         position: 'absolute',

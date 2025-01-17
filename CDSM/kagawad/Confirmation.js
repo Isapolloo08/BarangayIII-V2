@@ -55,44 +55,60 @@ const Confirmation = ({ navigation, route }) => {
         setModalVisible(true);
     };
 
-    const handleYesPress = () => {
-        setModalVisible(false);
+   const formatDate = (date) => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
 
-        // Save data to the backend
-        const programData = {
-            programName: eventName,
-            startDate,
-            endDate,
-            location,
-            note,
-            proposedBy,
-            committee: selectedCouncilor,
-            programType: 'Event',
-            savedMaterialsList,
-            savedExpensesList,
-            budget: totalEventFunds,
-            status: 'Pending'
-        };
+const handleYesPress = () => {
+    setModalVisible(false);
 
-        axios.post('http://brgyapp.lesterintheclouds.com/confirmEvent.php', programData)
-            .then(response => {
-                console.log('Success:', response.data);
-                // Navigate to the History screen
-                navigation.navigate('History', {
-                    eventName,
-                    location,
-                    startDate,
-                    endDate,
-                    note,
-                    savedMaterialsList,
-                    savedExpensesList,
-                    totalEventFunds,
-                });
-            })
-            .catch(error => {
-                console.error('Error:', error.response ? error.response.data : error.message);
-            });
+    // Format startDate and endDate
+    const formattedStartDate = formatDate(startDate);
+    const formattedEndDate = formatDate(endDate);
+
+    // Save data to the backend
+    const programData = {
+        programName: eventName,
+        startDate: formattedStartDate,
+        endDate: formattedEndDate,
+        location,
+        note,
+        proposedBy,
+        committee: selectedCouncilor,
+        programType: 'Event',
+        savedMaterialsList,
+        savedExpensesList,
+        budget: totalEventFunds,
+        status: 'Pending'
     };
+
+    axios.post('http://brgyapp.lesterintheclouds.com/confirmEvent.php', programData)
+        .then(response => {
+            console.log('Success:', response.data);
+            // Navigate to the History screen
+            navigation.navigate('History', {
+                eventName,
+                location,
+                startDate: formattedStartDate,
+                endDate: formattedEndDate,
+                note,
+                savedMaterialsList,
+                savedExpensesList,
+                totalEventFunds,
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error.response ? error.response.data : error.message);
+        });
+};
+
 
     const handleNoPress = () => {
         setModalVisible(false);

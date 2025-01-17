@@ -1,85 +1,117 @@
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import axios from 'axios';
 
 const ResidentRegistrationandProfiling = () => {
   const navigation = useNavigation();
-
-  const [residentsData, setResidentsData] = useState([
-    { id: 1, firstName: 'John', lastName: 'Doe', middleName: 'A', suffix: 'Jr.', age: '19', purok: 'Purok 1', barangay: 'Barangay 1', sex: 'Male', contactNumber: '0965874126852', isHouseholdHead: 'No', householdHeadName: 'Jay Doe', relationship: 'Son', householdNumber: '2024-25698' },
-    { id: 2, firstName: 'Jane', lastName: 'Smith', middleName: '', suffix: '', age: '20', purok: 'Purok 2', barangay: 'Barangay 2', sex: 'Female', contactNumber: '0965874126984', isHouseholdHead: 'Yes', householdNumber: '2024-25698' },
-  ]);
-
-  const headers = ['Name', 'Age', 'Address', 'Sex'];
-
+  const [residentsData, setResidentsData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [filterBySex, setFilterBySex] = useState(null);
+
+  useEffect(() => {
+    const fetchResidentsData = async () => {
+      try {
+        const response = await axios.get('http://brgyapp.lesterintheclouds.com/fetch_residents_data.php');
+        console.log(response.data); // Log fetched data
+        setResidentsData(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error('Error fetching residents data:', error);
+        setResidentsData([]);
+      }
+    };
+  
+    fetchResidentsData();
+  }, []);
+  
+  
+  const headers = ['Name', 'Age', 'Address', 'Sex'];
+
+  // Handle search input
+  const handleSearch = (text) => {
+    setSearchQuery(text.toLowerCase()); // Store search query in lowercase for case-insensitive search
+  };
+
+  const addNewCensusData = (newCensusData) => {
+    setResidentsData([...residentsData, newCensusData]);
+  };
+
 
   const navigateToDetails = (resident) => {
     navigation.navigate('ResidentDetails', { resident });
   };
 
-  const navigateToResidentHistory = () => {
-    const historyData = [
-      {
-        date: '2023-07-15',
-        changes: {
-          Name: { oldValue: 'John Doe', newValue: 'John Smith' },
-          Age: { oldValue: '30', newValue: '31' },
-        },
-      },
-      {
-        date: '2023-06-20',
-        changes: {
-          Address: { oldValue: '123 Main St', newValue: '456 Elm St' },
-        },
-      },
-    ];
-  
-    navigation.navigate('ResidentHistory', { history: historyData });
-  };
-
-  const handleSearch = (text) => {
-    setSearchQuery(text.toLowerCase());
+  const navigateToResidentHistory = (residentId) => {
+    // Assuming you will have a history page and will pass the resident ID to fetch history data
+    navigation.navigate('ResidentHistory', { residentId });
   };
 
   const applyFilters = (resident) => {
     const name = `${resident.firstName} ${resident.middleName} ${resident.lastName} ${resident.suffix}`.replace(/\s+/g, ' ').trim();
     const address = `${resident.purok}, ${resident.barangay}`;
+  
+    // Search filter
     if (searchQuery && !name.toLowerCase().includes(searchQuery)) {
       return false;
     }
-    if (filterBySex && resident.sex !== filterBySex) {
+  
+    // Sex filter (case-insensitive check, adjusted for the correct key 'Sex')
+    if (filterBySex && resident.Sex && resident.Sex.toLowerCase() !== filterBySex.toLowerCase()) {
       return false;
     }
+  
     return true;
   };
-
+  
   const toggleFilterModal = () => {
     setFilterModalVisible(!filterModalVisible);
   };
 
   const setSexFilter = (sex) => {
+    console.log('Selected Sex:', sex); // Log the selected sex
     setFilterBySex(sex);
-    toggleFilterModal();
+    toggleFilterModal(); // Close modal after setting the filter
   };
+  
 
   const clearFilters = () => {
-    setFilterBySex(null);
-    setSearchQuery('');
-    toggleFilterModal();
+    setFilterBySex(null); // Reset the sex filter
+    setSearchQuery(''); // Clear the search query
+    toggleFilterModal(); // Close the modal
   };
 
-  const filteredResidents = residentsData.filter(applyFilters);
+  // Use filtered residents based on the search query and sex filter
+  const filteredResidents = useMemo(() => 
+    residentsData.filter(applyFilters), [residentsData, searchQuery, filterBySex]);
 
-  // Function to add a new resident to the list
-  const addNewResident = (newResident) => {
-    setResidentsData([...residentsData, newResident]);
-  };
+  const renderHeader = () => (
+    <View style={styles.tableHeader}>
+      {headers.map((header, index) => (
+        <Text key={index} style={styles.headerCell}>{header}</Text>
+      ))}
+    </View>
+  );
+
+ const renderItem = ({ item }) => (
+     <TouchableOpacity
+       style={styles.residentRow}
+       onPress={() => {
+         navigation.navigate('CensusDetailss', { residentNum: item.residentNum });
+       }}
+     >
+      <Text style={styles.cell}>{item.Name}</Text>
+      <Text style={styles.cell}>{item.Age}</Text>
+      <Text style={styles.cell}>{item.Address}</Text>
+      <Text style={styles.cell}>{item.Sex}</Text>
+    </TouchableOpacity>
+  );
+
+  const keyExtractor = (item) => item.residentNum ? item.residentNum.toString() : Math.random().toString();
 
   return (
     <View style={styles.container}>
+      {/* Search Input */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -89,48 +121,36 @@ const ResidentRegistrationandProfiling = () => {
         />
       </View>
 
+      {/* Filter Button */}
       <View style={styles.filterContainer}>
         <Text style={styles.filterLabel}>Filter By:</Text>
-        <TouchableOpacity style={styles.dropdownButton} onPress={toggleFilterModal}>
-          <Text style={styles.dropdownButtonText}>{filterBySex || 'All'}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.historyButton} 
-          onPress={navigateToResidentHistory}>
-          <Text style={styles.historyButtonText}>View Resident History</Text>
+        <TouchableOpacity style={styles.filterButton} onPress={toggleFilterModal}>
+          <Text style={styles.filterButtonText}>{filterBySex || 'All'}</Text>
         </TouchableOpacity>
       </View>
 
-
-      <ScrollView style={styles.box}>
-        <View style={styles.tableHeader}>
-          {headers.map((header, index) => (
-            <Text key={index} style={[styles.headerCell, index === headers.length - 1 && { flex: 1 }]}>
-              {header}
-            </Text>
-          ))}
-        </View>
-        {filteredResidents.map((item, index) => {
-          const name = `${item.firstName} ${item.middleName} ${item.lastName} ${item.suffix}`.replace(/\s+/g, ' ').trim();
-          const address = `${item.purok}, ${item.barangay}`;
-          return (
-            <TouchableOpacity key={index} style={styles.residentRow} onPress={() => navigateToDetails(item)}>
-              <Text style={[styles.cell, { borderRightWidth: 1, borderRightColor: '#ccc' }]}>{name}</Text>
-              <Text style={[styles.cell, { borderRightWidth: 1, borderRightColor: '#ccc' }]}>{item.age}</Text>
-              <Text style={[styles.cell, { borderRightWidth: 1, borderRightColor: '#ccc' }]}>{address}</Text>
-              <Text style={styles.cell}>{item.sex}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      {/* Display "No Data" if no residents are found */}
+      {residentsData.length === 0 ? (
+        <Text style={styles.noDataText}>No residents found</Text>
+      ) : (
+        <FlatList
+          data={filteredResidents} // Use filtered residents data
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          ListHeaderComponent={renderHeader}
+          stickyHeaderIndices={[0]} // Make the header sticky
+          style={styles.box}
+        />
+      )}
 
       <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => navigation.navigate('AddResidentRegister', { addNewResident })}
-      >
-        <Text style={styles.addText}>+</Text>
-      </TouchableOpacity>
+              style={styles.addButton}
+              onPress={() => navigation.navigate('Add New Census Data', { addNewCensusData })}
+            >
+              <Text style={styles.addText}>+</Text>
+            </TouchableOpacity>
 
+      {/* Filter Modal */}
       <Modal animationType="slide" transparent={true} visible={filterModalVisible} onRequestClose={toggleFilterModal}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -186,7 +206,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     fontSize: 16,
   },
-  dropdownButton: {
+  filterButton: {
     height: 30,
     width: 80,
     justifyContent: 'center',
@@ -197,21 +217,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
   },
-  dropdownButtonText: {
-    fontSize: 14,
-    color: '#fff',
-  },
-  historyButton: {
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'green',
-    borderColor: 'green',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingHorizontal: 10,
-  },
-  historyButtonText: {
+  filterButtonText: {
     fontSize: 14,
     color: '#fff',
   },
@@ -235,7 +241,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
     textAlign: 'center',
-
   },
   residentRow: {
     flexDirection: 'row',
@@ -251,7 +256,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 60,
     right: 20,
     width: 60,
     height: 60,
@@ -264,6 +269,12 @@ const styles = StyleSheet.create({
   addText: {
     fontSize: 24,
     color: 'white',
+  },
+  noDataText: {
+    textAlign: 'center',
+    fontSize: 18,
+    color: '#888',
+    marginTop: 20,
   },
   modalContainer: {
     flex: 1,

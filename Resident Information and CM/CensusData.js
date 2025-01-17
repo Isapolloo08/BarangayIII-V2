@@ -1,171 +1,149 @@
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import axios from 'axios';
 
 const CensusData = () => {
   const navigation = useNavigation();
-
-  const [residentsData, setResidentsData] = useState([
-    { id: 1, firstName: 'John', lastName: 'Doe', middleName: 'A', suffix: 'Jr.', age: '60', purok: 'Purok 1', barangay: 'Barangay 1', sex: 'Male', contactNumber: '0965874126852', isHouseholdHead: 'No', householdHeadName: 'Jay Doe', relationship: 'Son', householdNumber: '2024-25698', lmp: null },
-    { id: 2, firstName: 'Jane', lastName: 'Smith', middleName: '', suffix: '', age: '20', purok: 'Purok 2', barangay: 'Barangay 2', sex: 'Female', contactNumber: '0965874126984', isHouseholdHead: 'Yes', householdHeadName: '', householdNumber: '2024-25698', lmp: '2024-06-01' },
-    { id: 3, firstName: 'Jay', lastName: 'Doe', middleName: '', suffix: '', age: '40', purok: 'Purok 1', barangay: 'Barangay 1', sex: 'Male', contactNumber: '0965874126852', isHouseholdHead: 'Yes', householdHeadName: '', householdNumber: '2024-25698', lmp: null },
-  ]);
-
-  const headers = ['Name', 'Age', 'Address', 'Sex'];
-
+  const [residentsData, setResidentsData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [filterByCategory, setFilterByCategory] = useState(null);
 
-  const navigateToDetails = (resident) => {
-    navigation.navigate('CensusDetails', { resident });
-  };
-
-  const navigateToCensusHistory = () => {
-    const historyData = [
-      {
-        date: '2023-07-15',
-        changes: {
-          Name: { oldValue: 'John Doe', newValue: 'John Smith' },
-          Age: { oldValue: '30', newValue: '31' },
-        },
-      },
-      {
-        date: '2023-06-20',
-        changes: {
-          Address: { oldValue: '123 Main St', newValue: '456 Elm St' },
-        },
-      },
-    ];
-  
-    navigation.navigate('CensusHistory', { history: historyData });
-  };
-
-  const handleSearch = (text) => {
-    setSearchQuery(text.toLowerCase());
-  };
-
+  // Determine if a resident is pregnant
   const isPregnant = (lmp) => {
     if (!lmp) return false;
-
     const lmpDate = new Date(lmp);
     const currentDate = new Date();
     const diffInMonths = (currentDate.getFullYear() - lmpDate.getFullYear()) * 12 + currentDate.getMonth() - lmpDate.getMonth();
-    
-    return diffInMonths > 3;
+    return diffInMonths <= 9; // Check if pregnant within 9 months
   };
 
-  const applyFilters = (resident) => {
-    const name = `${resident.firstName} ${resident.middleName} ${resident.lastName} ${resident.suffix}`.replace(/\s+/g, ' ').trim();
-    const address = `${resident.purok}, ${resident.barangay}`;
-    if (searchQuery && !name.toLowerCase().includes(searchQuery)) {
-      return false;
-    }
-    if (filterByCategory) {
-      const age = parseInt(resident.age, 10);
-      const isResidentPregnant = resident.sex === 'Female' && isPregnant(resident.lmp);
-      if (filterByCategory === 'Pregnant Women' && !isResidentPregnant) {
-        return false;
+  // Fetch data from API on component mount
+  useEffect(() => {
+    const fetchResidentsData = async () => {
+      try {
+        const response = await axios.get('http://brgyapp.lesterintheclouds.com/fetch_residents_data.php');
+        console.log(response.data); // Log fetched data
+        setResidentsData(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error('Error fetching residents data:', error);
+        setResidentsData([]);
       }
-      if (filterByCategory === 'Infant' && (age < 0 || age > 2)) {
-        return false;
-      }
-      if (filterByCategory === 'Adult' && (age < 18 || age > 59)) {
-        return false;
-      }
-      if (filterByCategory === 'Senior Citizens' && age < 60) {
-        return false;
-      }
-    }
-    return true;
+    };
+
+    fetchResidentsData();
+  }, []);
+
+  const headers = ['Name', 'Age', 'Address', 'Sex'];
+
+  // Handle search input
+  const handleSearch = (text) => {
+    setSearchQuery(text.toLowerCase()); // Store the search query in lower case for case-insensitive search
   };
 
-  const toggleFilterModal = () => {
-    setFilterModalVisible(!filterModalVisible);
-  };
-
-  const setCategoryFilter = (category) => {
-    setFilterByCategory(category);
-    toggleFilterModal();
-  };
-
-  const clearFilters = () => {
-    setFilterByCategory(null);
-    setSearchQuery('');
-    toggleFilterModal();
-  };
-
-  const filteredResidents = residentsData.filter(applyFilters);
-
-  // Sorting the residents data
-  const sortedResidentsData = filteredResidents
-    .filter(resident => resident.isHouseholdHead === 'Yes')
-    .sort((a, b) => a.lastName.localeCompare(b.lastName))
-    .map(head => {
-      const members = filteredResidents
-        .filter(resident => resident.householdHeadName === head.firstName + ' ' + head.lastName)
-        .sort((a, b) => a.age - b.age);
-      return [head, ...members];
-    })
-    .flat();
-
-  // Function to add a new resident to the list
   const addNewCensusData = (newCensusData) => {
     setResidentsData([...residentsData, newCensusData]);
   };
 
+  // Filter residents based on search query and category filter
+  const filteredResidents = useMemo(() => 
+    residentsData.filter((resident) => {
+      // Name search filter
+      const nameMatch = (resident.Name || '').toLowerCase().includes(searchQuery);
+
+      // Category filter logic
+      const age = parseInt(resident.Age, 10);
+      const isPregnantStatus = resident.Sex === 'Female' && isPregnant(resident.LMP); // Assuming LMP exists in the data
+      let categoryMatch = true;
+
+      if (filterByCategory === 'Infant' && !(age >= 0 && age <= 2)) categoryMatch = false;
+      if (filterByCategory === 'Adult' && !(age >= 18 && age <= 59)) categoryMatch = false;
+      if (filterByCategory === 'Senior Citizens' && !(age >= 60)) categoryMatch = false;
+      if (filterByCategory === 'Pregnant Women' && !isPregnantStatus) categoryMatch = false;
+
+      return nameMatch && categoryMatch;
+    }), [residentsData, searchQuery, filterByCategory]);
+
+  const renderHeader = () => (
+    <View style={styles.tableHeader}>
+      {headers.map((header, index) => (
+        <Text key={index} style={styles.headerCell}>{header}</Text>
+      ))}
+    </View>
+  );
+
+  const navigateToRegister = () => {
+    navigation.navigate('AddCensusData');
+  };
+
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.residentRow}
+      onPress={() => {
+        navigation.navigate('CensusDetails', { residentNum: item.residentNum });
+      }}
+    >
+      <Text style={styles.cell}>{item.Name}</Text>
+      <Text style={styles.cell}>{item.Age}</Text>
+      <Text style={styles.cell}>{item.Address}</Text>
+      <Text style={styles.cell}>{item.Sex}</Text>
+    </TouchableOpacity>
+  );
+
+  // Toggle filter modal visibility
+  const toggleFilterModal = () => {
+    setFilterModalVisible(!filterModalVisible);
+  };
+
+  // Set filter category
+  const setCategoryFilter = (category) => {
+    setFilterByCategory(category);
+    toggleFilterModal(); // Close the modal after setting the filter
+  };
+
   return (
     <View style={styles.container}>
+      {/* Search Input */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search residents..."
+          placeholder="Search residents by name..."
           value={searchQuery}
-          onChangeText={handleSearch}
+          onChangeText={handleSearch} // Update search query on text change
         />
       </View>
 
+      {/* Filter Button */}
       <View style={styles.filterContainer}>
         <Text style={styles.filterLabel}>Filter By:</Text>
-        <TouchableOpacity style={styles.dropdownButton} onPress={toggleFilterModal}>
-          <Text style={styles.dropdownButtonText}>{filterByCategory || 'All'}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.historyButton} 
-          onPress={navigateToCensusHistory}>
-          <Text style={styles.historyButtonText}>View Census History</Text>
+        <TouchableOpacity style={styles.filterButton} onPress={toggleFilterModal}>
+          <Text style={styles.filterButtonText}>{filterByCategory || 'All'}</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.box}>
-        <View style={styles.tableHeader}>
-          {headers.map((header, index) => (
-            <Text key={index} style={[styles.headerCell, index === headers.length - 1 && { flex: 1 }]}>
-              {header}
-            </Text>
-          ))}
-        </View>
-        {sortedResidentsData.map((item, index) => {
-          const name = `${item.firstName} ${item.middleName} ${item.lastName} ${item.suffix}`.replace(/\s+/g, ' ').trim();
-          const address = `${item.purok}, ${item.barangay}`;
-          return (
-            <TouchableOpacity key={index} style={styles.residentRow} onPress={() => navigateToDetails(item)}>
-              <Text style={[styles.cell, { borderRightWidth: 1, borderRightColor: '#ccc' }]}>{name}</Text>
-              <Text style={[styles.cell, { borderRightWidth: 1, borderRightColor: '#ccc' }]}>{item.age}</Text>
-              <Text style={[styles.cell, { borderRightWidth: 1, borderRightColor: '#ccc' }]}>{address}</Text>
-              <Text style={styles.cell}>{item.sex}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      {/* Display "No Data" if no residents are found */}
+      {residentsData.length === 0 ? (
+        <Text style={styles.noDataText}>No residents found</Text>
+      ) : (
+        <FlatList
+          data={filteredResidents} // Use filtered residents data here
+          keyExtractor={(item) => item.residentNum.toString()}
+          renderItem={renderItem}
+          ListHeaderComponent={renderHeader}
+          stickyHeaderIndices={[0]}  // Make the header sticky
+          style={styles.box}
+        />
+      )}
 
-      <TouchableOpacity
+<TouchableOpacity
         style={styles.addButton}
         onPress={() => navigation.navigate('AddCensusData', { addNewCensusData })}
       >
         <Text style={styles.addText}>+</Text>
       </TouchableOpacity>
 
+      {/* Filter Modal */}
       <Modal animationType="slide" transparent={true} visible={filterModalVisible} onRequestClose={toggleFilterModal}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -181,8 +159,8 @@ const CensusData = () => {
             <TouchableOpacity style={styles.modalItem} onPress={() => setCategoryFilter('Pregnant Women')}>
               <Text style={styles.modalText}>Pregnant Women</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.modalItem} onPress={clearFilters}>
-              <Text style={styles.modalText}>Clear</Text>
+            <TouchableOpacity style={styles.modalItem} onPress={() => setCategoryFilter(null)}>
+              <Text style={styles.modalText}>Clear Filter</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.modalItem} onPress={toggleFilterModal}>
               <Text style={styles.modalText}>Cancel</Text>
@@ -193,6 +171,7 @@ const CensusData = () => {
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -221,40 +200,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 15,
-    marginTop: 5,
   },
   filterLabel: {
-    marginRight: 10,
     fontSize: 16,
+    fontWeight: 'bold',
   },
-  dropdownButton: {
-    height: 40,
-    width: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'red',
-    borderColor: 'red',
-    borderWidth: 1,
-    borderRadius: 5,
+  filterButton: {
     paddingHorizontal: 10,
-  },
-  dropdownButtonText: {
-    fontSize: 14,
-    color: '#fff',
-  },
-  historyButton: {
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingVertical: 5,
     backgroundColor: 'green',
-    borderColor: 'green',
-    borderWidth: 1,
     borderRadius: 5,
-    paddingHorizontal: 10,
   },
-  historyButtonText: {
-    fontSize: 14,
+  filterButtonText: {
     color: '#fff',
+    fontSize: 14,
   },
   box: {
     flex: 1,
@@ -270,13 +229,14 @@ const styles = StyleSheet.create({
     borderBottomColor: '#ddd',
     paddingBottom: 10,
     marginBottom: 10,
+    backgroundColor: '#f4f4f4',
   },
   headerCell: {
     flex: 1,
     fontWeight: 'bold',
     fontSize: 14,
     textAlign: 'center',
-
+    padding: 5,
   },
   residentRow: {
     flexDirection: 'row',
@@ -292,7 +252,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 60,
     right: 20,
     width: 60,
     height: 60,
@@ -305,6 +265,12 @@ const styles = StyleSheet.create({
   addText: {
     fontSize: 24,
     color: 'white',
+  },
+  noDataText: {
+    textAlign: 'center',
+    fontSize: 18,
+    color: '#888',
+    marginTop: 20,
   },
   modalContainer: {
     flex: 1,

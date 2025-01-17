@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import axios from 'axios';
 
 const EditCensusData = ({ route, navigation }) => {
   const { resident } = route.params;
@@ -38,10 +39,28 @@ const EditCensusData = ({ route, navigation }) => {
     setFormData({ ...formData, householdMembers: updatedMembers });
   };
 
-  const handleSave = () => {
-    console.log('Saved data:', formData);
-    navigation.navigate('CensusDetails', { resident: { ...resident, ...formData } });
+  const handleSave = async () => {
+    try {
+      // Prepare the data to send, including the resident's id
+      const dataToSave = { 
+        id: resident.id, // The unique identifier of the resident
+        ...formData 
+      };
+  
+      // Make a POST request to the PHP backend (updateUser.php)
+      const response = await axios.post('http://brgyapp.lesterintheclouds.com/updateUser.php', dataToSave);
+  
+      if (response.data.success) {
+        console.log('Updated data successfully');
+        navigation.navigate('CensusDetails', { resident: { ...resident, ...formData } });
+      } else {
+        console.error('Error updating data:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
   };
+  
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

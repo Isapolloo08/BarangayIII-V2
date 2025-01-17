@@ -26,8 +26,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#710808',
         justifyContent: 'center',   
         alignItems: 'center',
-        paddingTop: 20, // Added padding to top align content
-        marginTop: 50, 
+        paddingTop: 20
     },
 
  

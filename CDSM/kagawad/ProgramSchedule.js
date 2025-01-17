@@ -48,9 +48,7 @@ const ProgramSchedule = () => {
     setSelectedEvent(eventName);
     toggleButtons();
 
-    if (eventName === 'Meeting') {
-      navigation.navigate('ProposeMeeting');
-    } else if (eventName === 'Activity') {
+    if (eventName === 'Activity') {
       navigation.navigate('ProposeActivity');
     } else if (eventName === 'Event') {
       navigation.navigate('ProposeEvent');
@@ -109,8 +107,6 @@ const ProgramSchedule = () => {
         return '#E0E7FF'; // Light Blue for Event container
       case 'Activity':
         return '#F4EAEA'; // Light Red for Activity container
-      case 'Meeting':
-        return '#FFF9E5'; // Light Yellow for Meeting container
       default:
         return '#FFFFFF'; // White for default
     }
@@ -134,32 +130,12 @@ const ProgramSchedule = () => {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={toggleButtons}
+          onPress={() => handleEventSelect('Event')}
         >
           <Text style={styles.addButtonText}>+</Text>
+          
         </TouchableOpacity>
-        {buttonsVisible && (
-          <View style={styles.dropdownContainer}>
-            <TouchableOpacity
-              style={[styles.dropdownButton, { backgroundColor: '#FFC700' }]}
-              onPress={() => handleEventSelect('Meeting')}
-            >
-              <Text style={[styles.dropdownButtonText, { color: '#fff' }]}>Meeting</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.dropdownButton, { backgroundColor: '#710808' }]}
-              onPress={() => handleEventSelect('Activity')}
-            >
-              <Text style={[styles.dropdownButtonText, { color: '#fff' }]}>Activity</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.dropdownButton, { backgroundColor: '#0C08C1' }]}
-              onPress={() => handleEventSelect('Event')}
-            >
-              <Text style={[styles.dropdownButtonText, { color: '#fff' }]}>Event</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+  
       </View>
       {filteredPrograms.length > 0 ? (
         <FlatList

@@ -1,17 +1,15 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import axios from 'axios';
 
 const ResidentDocumentRequest = () => {
   const navigation = useNavigation();
 
-  const [residentsDocumentRequest, setResidentsDocumentRequest] = useState([
-    { id: 1, OR: '', firstName: 'John', lastName: 'Doe', middleName: 'A', suffix: 'Jr.', documentType: 'Barangay ID', date: '2024-07-24', amount: '100', status: 'unpaid' },
-    { id: 2, OR: '2015869', firstName: 'Jane', lastName: 'Smith', middleName: '', suffix: '', documentType: 'Business Permit', date: '2024-08-15', amount: '80', status: 'paid' },
-  ]);
-
-  const headers = ['OR No.', 'Name', 'Document Type', 'Date', 'Amount', 'Status', 'Action'];
+  const [residentsDocumentRequest, setResidentsDocumentRequest] = useState([]); // Initial empty state
+  const [loading, setLoading] = useState(false); // Loading state
+  const [error, setError] = useState(null); // Error state
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -20,12 +18,33 @@ const ResidentDocumentRequest = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [newORNumber, setNewORNumber] = useState('');
 
+  const headers = ['OR No.', 'Name', 'Address', 'Document Type', 'Purpose', 'Date', 'Time', 'Status', 'Action'];
+
+  useEffect(() => {
+    // Fetch data from the backend API
+    const fetchData = async () => {
+      setLoading(true); // Set loading to true
+      try {
+        const response = await axios.get('http://brgyapp.lesterintheclouds.com/FetchForNewDocuments.php');
+        console.log('Fetched Data:', response.data); // Log the fetched data
+        setResidentsDocumentRequest(response.data); // Populate the table
+      } catch (err) {
+        setError('Failed to fetch data. Please try again later.');
+        console.error(err);
+      } finally {
+        setLoading(false); // Set loading to false after the fetch operation
+      }
+    };
+
+    fetchData(); // Call the fetch function when the component mounts
+  }, []);
+
   const handleSearch = (text) => {
     setSearchQuery(text.toLowerCase());
   };
 
   const applyFilters = (document) => {
-    const name = `${document.firstName} ${document.middleName} ${document.lastName} ${document.suffix}`.replace(/\s+/g, ' ').trim();
+    const name = `${document.name}`.replace(/\s+/g, ' ').trim();
     if (searchQuery && !name.toLowerCase().includes(searchQuery) && !document.documentType.toLowerCase().includes(searchQuery)) {
       return false;
     }
@@ -59,33 +78,73 @@ const ResidentDocumentRequest = () => {
 
   const handleUpdateStatus = (document) => {
     setSelectedDocument(document);
-    setNewORNumber(document.OR || '');
+    setNewORNumber(document.ORNo || ''); // Update OR number
     setModalVisible(true);
   };
 
-  const handleSave = () => {
+  const handleAccept = async () => {
     if (selectedDocument) {
-      const updatedDocuments = residentsDocumentRequest.map((doc) =>
-        doc.id === selectedDocument.id
-          ? { ...doc, status: 'paid', OR: newORNumber }
-          : doc
-      );
-      setResidentsDocumentRequest(updatedDocuments);
-      setModalVisible(false);
-      Alert.alert('Success', 'Document status updated and OR number added.');
+      try {
+        const response = await axios.post('http://brgyapp.lesterintheclouds.com/UpdateDocumentStatus.php', {
+          id: selectedDocument.id,
+          status: 'accepted', // Update status to accepted
+          orNumber: newORNumber
+        });
+
+        if (response.data.success) {
+          // Update the state with new status
+          const updatedDocuments = residentsDocumentRequest.map((doc) =>
+            doc.id === selectedDocument.id
+              ? { ...doc, status: 'accepted', ORNo: newORNumber }
+              : doc
+          );
+          setResidentsDocumentRequest(updatedDocuments);
+          setModalVisible(false);
+          Alert.alert('Success', 'Document accepted successfully.');
+        } else {
+          Alert.alert('Error', 'Failed to accept the document.');
+        }
+      } catch (err) {
+        console.error(err);
+        Alert.alert('Error', 'Something went wrong.');
+      }
     }
   };
 
-  const handlePrint = (document) => {
-    if (document && document.status === 'paid') {
-      navigation.navigate('PrintReceiptTreasurer', { document });
-    } else {
-      Alert.alert('Print Error', 'Only documents with "paid" status can be printed.');
+  const handleDecline = async () => {
+    if (selectedDocument) {
+      try {
+        const response = await axios.post('http://brgyapp.lesterintheclouds.com/UpdateDocumentStatus.php', {
+          id: selectedDocument.id,
+          status: 'declined', // Update status to declined
+          orNumber: '' // No OR number for declined requests
+        });
+
+        if (response.data.success) {
+          // Update the state with new status
+          const updatedDocuments = residentsDocumentRequest.map((doc) =>
+            doc.id === selectedDocument.id
+              ? { ...doc, status: 'declined' }
+              : doc
+          );
+          setResidentsDocumentRequest(updatedDocuments);
+          setModalVisible(false);
+          Alert.alert('Success', 'Document declined successfully.');
+        } else {
+          Alert.alert('Error', 'Failed to decline the document.');
+        }
+      } catch (err) {
+        console.error(err);
+        Alert.alert('Error', 'Something went wrong.');
+      }
     }
   };
 
   return (
     <View style={styles.container}>
+      {loading && <Text>Loading...</Text>}
+      {error && <Text style={styles.errorText}>{error}</Text>}
+
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -113,41 +172,36 @@ const ResidentDocumentRequest = () => {
           </View>
           <ScrollView vertical style={styles.tableBody}>
             {filteredDocuments.map((item, index) => {
-              const name = `${item.firstName} ${item.middleName} ${item.lastName} ${item.suffix}`.replace(/\s+/g, ' ').trim();
               return (
                 <View key={index} style={styles.row}>
                   <View style={[styles.cell, { width: columnWidths[0] }]}>
-                    <Text>{item.OR || 'N/A'}</Text>
+                    <Text>{item.ORNo || 'N/A'}</Text>
                   </View>
                   <View style={[styles.cell, { width: columnWidths[1] }]}>
-                    <Text>{name}</Text>
+                    <Text>{item.name}</Text>
                   </View>
                   <View style={[styles.cell, { width: columnWidths[2] }]}>
-                    <Text>{item.documentType}</Text>
+                    <Text>{item.address}</Text>
                   </View>
                   <View style={[styles.cell, { width: columnWidths[3] }]}>
-                    <Text>{item.date}</Text>
+                    <Text>{item.documentType}</Text>
                   </View>
                   <View style={[styles.cell, { width: columnWidths[4] }]}>
-                    <Text>{item.amount}</Text>
+                    <Text>{item.purpose}</Text>
                   </View>
-                  <View style={[styles.cell, { width: columnWidths[5] }, item.status === 'paid' ? styles.cellPaid : styles.cellUnpaid]}>
-                    <Text style={styles.statusText}>{item.status}</Text>
+                  <View style={[styles.cell, { width: columnWidths[5] }]}>
+                    <Text>{item.dateOfClaim}</Text>
                   </View>
-                  <View style={[styles.cell, { width: columnWidths[6], flexDirection: 'row', justifyContent: 'center' }]}>
+                  <View style={[styles.cell, { width: columnWidths[6] }]}>
+                    <Text>{item.timeOfClaim}</Text>
+                  </View>
+                  <View style={[styles.cell, { width: columnWidths[7] }]}>
+                    <Text>{item.status}</Text>
+                  </View>
+                  <View style={[styles.cell, { width: columnWidths[8], flexDirection: 'row', justifyContent: 'center' }]}>
                     <TouchableOpacity onPress={() => handleView(item)}>
                       <Icon name="eye" size={20} color="blue" />
                     </TouchableOpacity>
-                    {item.status === 'unpaid' && (
-                      <TouchableOpacity onPress={() => handleUpdateStatus(item)} style={styles.printButton}>
-                        <Icon name="edit" size={20} color="blue" />
-                      </TouchableOpacity>
-                    )}
-                    {item.status === 'paid' && (
-                      <TouchableOpacity onPress={() => handlePrint(item)} style={styles.printButton}>
-                        <Icon name="print" size={20} color="blue" />
-                      </TouchableOpacity>
-                    )}
                   </View>
                 </View>
               );
@@ -155,25 +209,6 @@ const ResidentDocumentRequest = () => {
           </ScrollView>
         </View>
       </ScrollView>
-
-      <Modal animationType="slide" transparent={true} visible={filterModalVisible} onRequestClose={toggleFilterModal}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <TouchableOpacity style={styles.modalItem} onPress={() => setStatusFilter('paid')}>
-              <Text style={styles.modalText}>Paid</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalItem} onPress={() => setStatusFilter('unpaid')}>
-              <Text style={styles.modalText}>Unpaid</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalItem} onPress={clearFilters}>
-              <Text style={styles.modalText}>Clear</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalItem} onPress={toggleFilterModal}>
-              <Text style={styles.modalText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalContainer}>
@@ -185,9 +220,14 @@ const ResidentDocumentRequest = () => {
               onChangeText={setNewORNumber}
               keyboardType="numeric"
             />
-            <TouchableOpacity style={styles.button} onPress={handleSave}>
-              <Text style={styles.buttonText}>Save</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.button} onPress={handleAccept}>
+                <Text style={styles.buttonText}>Accept</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={handleDecline}>
+                <Text style={styles.buttonText}>Decline</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -195,7 +235,9 @@ const ResidentDocumentRequest = () => {
   );
 };
 
-const columnWidths = [100, 200, 150, 100, 100, 100, 80]; // Adjusted to include action column width
+
+
+const columnWidths = [100, 200, 200, 200, 200, 150, 150, 150, 150];
 
 const styles = StyleSheet.create({
   container: {

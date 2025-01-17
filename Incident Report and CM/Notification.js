@@ -110,10 +110,7 @@ const Notification = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Icon name="menu" size={30} color="#fff" />
-        <Text style={styles.headerTitle}>NOTIFICATION</Text>
-      </View>
+    
 
       {loading ? (
         <ActivityIndicator size="large" color="#800000" style={styles.loader} />

@@ -1,6 +1,5 @@
-// CustomHeader.js
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
 
 const CustomHeader = ({ title }) => {
     return (
@@ -8,7 +7,7 @@ const CustomHeader = ({ title }) => {
             <Image
                 source={require('../assets/logo.png')} // Replace with your image path
                 style={styles.image}
-                resizeMode="contain" // Adjust the resizeMode as needed
+                resizeMode="contain"
             />
             <Text style={styles.text}>BARANGAY APPLICATION</Text>
             <Text style={styles.text1}>BARANGAY III, DAET, CAMARINES NORTE</Text>
@@ -16,29 +15,33 @@ const CustomHeader = ({ title }) => {
     );
 };
 
+const { width } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
     header: {
-        height: 250, // Increased height to accommodate lower position of back button
         backgroundColor: '#710808',
         justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: 20, // Added padding to top align content
+        paddingVertical: 20,
     },
     image: {
-        width: '50%', // Adjust the width as needed
-        height: '50%', // Adjust the height as needed
-        marginBottom: 290, // Adjust the margin below the image
+        width: width * 0.5, // Use percentage of screen width for responsiveness
+        height: undefined,  // Allow height to scale based on width
+        aspectRatio: 1,     // Maintain aspect ratio of the image
+        marginBottom: 10,   // Adjust the spacing as needed
     },
     text: {
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
-        marginTop: -250, // Adjust the margin top to move closer to the image
+        marginTop: 10, // Adjust margin to add spacing between text and image
+        textAlign: 'center', // Center align the text
     },
     text1: {
         color: 'white',
-        fontSize: 16,
-        marginTop: -50, // Adjust the margin top to move closer to the image
+        fontSize: 14, // Slightly smaller font for subtitle
+        marginTop: 5, // Adjust margin for spacing
+        textAlign: 'center', // Center align the text
     },
 });
 

@@ -1,4 +1,4 @@
-  import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ const { width } = Dimensions.get('window');
 export default function AuditReports({ navigation }) {
   const [auditData, setAuditData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedFeature, setSelectedFeature] = useState('');
+  const [selectedFeature, setSelectedFeature] = useState(''); 
   const [availableFeatures, setAvailableFeatures] = useState([]);
 
   // Fetch audit data
@@ -54,87 +54,85 @@ export default function AuditReports({ navigation }) {
     fetchAuditData();
   }, [selectedFeature]);
 
+
+  // Prepare filtered data based on selected feature
+  const filteredData = auditData.filter(item =>
+    selectedFeature ? item.feature === selectedFeature : true
+  );
+
+  // Printing preview
   const PrintAudit = async () => {
-    // Apply filtering based on selected feature
-    const filteredData = auditData.filter(item =>
-      selectedFeature ? item.feature === selectedFeature : true
-    );
-  
     if (filteredData.length === 0) {
       alert('No data available to print.');
       return;
     }
-  
-    const htmlTable = `
-      <html>
-        <head>
-          <style>
-            table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-            th, td {
-              border: 1px solid #ddd;
-              padding: 15px;
-              text-align: left;
-            }
-            th {
-              background-color: #710808;
-              color: white;
-            }
-            h2 {
-              text-align: center;
-              padding-top: 15px;
-            }
-          </style>
-        </head>
-        <body>
-          <h2>Audit Report</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Audit ID</th>
-                <th>Timestamp</th>
-                <th>Details</th>
-                <th>Feature</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredData
-                .map(item => `
-                  <tr>
-                    <td>${item.auditID || 'N/A'}</td>
-                    <td>${item.timestamp || 'N/A'}</td>
-                    <td>${item.details || 'N/A'}</td>
-                    <td>${item.feature || 'N/A'}</td>
-                  </tr>
-                `)
-                .join('')}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-  
-    try {
-      const file = await printToFileAsync({
-        html: htmlTable,
-        base64: false,
-      });
-  
-      console.log('File created at:', file.uri);
-      await printAsync({ uri: file.uri });
-    } catch (error) {
-      console.error('Error printing audit:', error);
-    }
-  };
-  
 
+    const htmlTable = `
+    <html>
+      <head>
+        <style>
+          table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: left;
+          }
+          th {
+            background-color: #710808;
+            color: white;
+          }
+          h2 {
+          text-align: center;
+          padding-top: 15px;
+          }
+        </style>
+      </head>
+      <body>
+        <h2>Audit Report</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Details</th>
+              <th>Feature</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredData
+              .map(item => `
+                <tr>
+                  <td>${item.timestamp || 'N/A'}</td>
+                  <td>${item.details || 'N/A'}</td>
+                  <td>${item.feature || 'N/A'}</td>
+                </tr>
+              `)
+              .join('')}
+          </tbody>
+        </table>
+      </body>
+    </html>
+  `;
+
+  try {
+    const file = await printToFileAsync({
+      html: htmlTable,
+      base64: false,
+    });
+
+    console.log('File created at:', file.uri);
+    await printAsync({ uri: file.uri });
+  } catch (error) {
+    console.error('Error printing audit:', error);
+  }
+};
 
   return (
     <View style={styles.container}>
       <View style={styles.featurePickerContainer}>
-        <Text style={styles.featurePickerLabel}> Select Feature:</Text>
+        <Text style={styles.featurePickerLabel}>Select Feature:</Text>
         <RNPickerSelect
           items={availableFeatures.map(feature => ({ label: feature, value: feature }))}
           onValueChange={setSelectedFeature}
@@ -146,7 +144,6 @@ export default function AuditReports({ navigation }) {
       <ScrollView horizontal contentContainerStyle={styles.tableContainer}>
         <View style={styles.table}>
           <View style={styles.headerRow}>
-            <Text style={styles.headerCell}>Audit ID</Text>
             <Text style={styles.headerCell}>Timestamp</Text>
             {/* <Text style={styles.headerCell}>Processed By</Text> */}
             <Text style={styles.headerCell}>Details</Text>
@@ -161,7 +158,6 @@ export default function AuditReports({ navigation }) {
               )}
               renderItem={({ item }) => (
                 <View style={styles.row}>
-                  <Text style={styles.cell}>{item.auditID || 'N/A'}</Text>
                   <Text style={styles.cell}>{item.timestamp || 'N/A'}</Text>
                   {/* <Text style={styles.cell}>{item.proccesedBy || 'N/A'}</Text> */}
                   <Text style={styles.cell}>{item.details || 'N/A'}</Text>
@@ -174,22 +170,20 @@ export default function AuditReports({ navigation }) {
         </View>
       </ScrollView>
 
-      <View style={styles.buttonContainer}>
-      <TouchableOpacity
-          style={styles.printButton}
-          onPress={PrintAudit} // Trigger Print functionality
-        >
-          <Icon name="print" size={20} color="#fff" /> {/* FontAwesome Icon for Print */}
-          <Text style={styles.buttonText}>Print</Text>
-        </TouchableOpacity>
-
-        {/* Add Button */}
+ <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => navigation.navigate('auditadd')} // Placeholder navigation action
-        >
-          <Icon name="plus" size={20} color="#fff" /> {/* FontAwesome Icon for Add */}
-          <Text style={styles.buttonText}>Add</Text>
+          onPress={() => navigation?.navigate('Audit Add')}>
+          <Text style={styles.addButtonText}>Add Audit</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Print */}            
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={styles.printButton} onPress={PrintAudit}>
+          <Icon name="print" size={20} color="#fff" />
+          <Text style={styles.addButtonText}>Print</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -203,26 +197,29 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   featurePickerContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    marginBottom: 20, 
+    alignItems: 'center', 
     marginBottom: 20,
-    marginLeft: 5,
-    marginRight: 5,
-    backgroundColor: '#710808',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#710808', 
+    width: '100%', 
+    height: 60, 
   },
   featurePickerLabel: {
-    fontSize: 16,
-    marginLeft: 50,
-    color: '#fff',
+    fontSize: 16, 
+    color: '#710808', 
+    fontWeight: 'bold', 
     flex: 1,
-    textAlign: 'center',
   },
   tableContainer: {
     width: '100%',
     flex: 1,
     marginTop: 10,
-    paddingBottom: 70,
   },
   table: {
     width: '100%',
@@ -260,27 +257,29 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-between',
     marginTop: 20,
+    width: '100%',
   },
   addButton: {
     backgroundColor: '#710808',
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 5,
-    flexDirection: 'row',
+    width: '100%', // Adjust width for alignment
     alignItems: 'center',
   },
   printButton: {
     backgroundColor: '#710808',
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 5,
-    flexDirection: 'row',
+    width: '100%', // Adjust width for alignment
     alignItems: 'center',
   },
-  buttonText: {
+  addButtonText: {
     color: '#fff',
     fontSize: 16,
-    marginLeft: 5,
   },
 });
 

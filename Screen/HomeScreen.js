@@ -18,8 +18,7 @@ const HomeScreen = () => {
   console.log("Sheesh to Home with role:", userRole); // Debug log
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Home Screen</Text>
+    <View style={styles.container}> 
       <Text style={styles.roleText}>Role: {userRole}</Text>
     </View>
   );

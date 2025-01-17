@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import CalendarPicker from 'react-native-calendar-picker';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
@@ -9,62 +9,48 @@ console.disableYellowBox = true;
 
 const CCalendar = () => {
   const [selectedStartDate, setSelectedStartDate] = useState(null);
+  const [buttonsVisible, setButtonsVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [eventName, setEventName] = useState('');
   const [showNoEventMessage, setShowNoEventMessage] = useState(false);
-  const [approvedPrograms, setApprovedPrograms] = useState([]);
   const [filteredPrograms, setFilteredPrograms] = useState([]);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    const fetchApprovedPrograms = async () => {
-      try {
-        const response = await axios.get('http://192.168.75.106:3001/programs');
-        const approved = response.data
-          .filter(program => program.status === 'Approved')
-          .map(program => ({
-            ...program,
-            startDate: moment(program.startDate, 'ddd, MMMM D, YYYY').format('YYYY-MM-DD'),
-            endDate: moment(program.endDate, 'ddd, MMMM D, YYYY').format('YYYY-MM-DD')
-          }));
-        setApprovedPrograms(approved);
-        console.log('Fetched approved programs:', approved); // Debugging log
-      } catch (error) {
-        console.error('Error fetching approved programs:', error);
-      }
-    };
-
-    fetchApprovedPrograms();
-  }, []);
-
-  const onDateChange = (date) => {
+  const onDateChange = async (date) => {
     setSelectedStartDate(date);
-    const selectedDate = moment(date).format('YYYY-MM-DD'); // Convert to YYYY-MM-DD format
-
+  
+    // Format the selected date to 'yyyy-mm-dd'
+    const selectedDate = moment(date).format('YYYY-MM-DD'); // Send just the date
+  
     console.log('Selected date:', selectedDate); // Debugging log
-
-    const programsForDate = approvedPrograms.filter(program => {
-      const programStartDate = moment(program.startDate).format('YYYY-MM-DD');
-      const programEndDate = moment(program.endDate).format('YYYY-MM-DD');
-
-      console.log('Program date range:', programStartDate, 'to', programEndDate); // Debugging log
-
-      return selectedDate >= programStartDate && selectedDate <= programEndDate; // Inclusive range
-    });
-
-    console.log('Programs for selected date:', programsForDate); // Debugging log
-
-    setFilteredPrograms(programsForDate);
-    setShowNoEventMessage(programsForDate.length === 0);
+  
+    try {
+      const response = await axios.post('http://brgyapp.lesterintheclouds.com/programsched.php', {
+        selectedStartDate: selectedDate
+      });
+      const programsForDate = response.data;
+  
+      console.log('Programs for selected date:', programsForDate); // Debugging log
+  
+      setFilteredPrograms(programsForDate);
+      setShowNoEventMessage(programsForDate.length === 0);
+    } catch (error) {
+      console.error('Error fetching programs for selected date:', error);
+      setShowNoEventMessage(true);
+    }
+  };
+  
+  const toggleButtons = () => {
+    setButtonsVisible(!buttonsVisible);
+    setSelectedEvent(null);
   };
 
   const handleEventSelect = (eventName) => {
     setEventName(eventName);
     setSelectedEvent(eventName);
+    toggleButtons();
 
-    if (eventName === 'Meeting') {
-      navigation.navigate('ProposeMeeting');
-    } else if (eventName === 'Activity') {
+    if (eventName === 'Activity') {
       navigation.navigate('ProposeActivity');
     } else if (eventName === 'Event') {
       navigation.navigate('ProposeEvent');
@@ -123,8 +109,6 @@ const CCalendar = () => {
         return '#E0E7FF'; // Light Blue for Event container
       case 'Activity':
         return '#F4EAEA'; // Light Red for Activity container
-      case 'Meeting':
-        return '#FFF9E5'; // Light Yellow for Meeting container
       default:
         return '#FFFFFF'; // White for default
     }
@@ -145,6 +129,9 @@ const CCalendar = () => {
           <Text style={styles.noEventText}>There is no program scheduled for this date</Text>
         </View>
       )}
+      <View style={styles.buttonContainer}>
+        
+      </View>
       {filteredPrograms.length > 0 ? (
         <FlatList
           data={filteredPrograms}
@@ -164,8 +151,47 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     padding: 20,
   },
-  calendar: {
-    // Define any specific styling for the calendar here if needed
+  buttonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  addButton: {
+    backgroundColor: '#800000',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 30,
+    fontWeight: 'bold',
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    bottom: 80,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 9,
+  },
+  dropdownButton: {
+    width: 100,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    elevation: 2,
+  },
+  dropdownButtonText: {
+    fontSize: 14,
   },
   bottomContainer: {
     position: 'absolute',
@@ -195,6 +221,11 @@ const styles = StyleSheet.create({
     top: 10,
     right: 10,
     alignItems: 'flex-end',
+  },
+  dateBox: {
+    padding: 5,
+    borderRadius: 5,
+    marginBottom: 5,
   },
   dateText: {
     fontSize: 12,

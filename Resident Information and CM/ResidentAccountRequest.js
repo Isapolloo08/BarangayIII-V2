@@ -1,44 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-// Example data, replace with actual data fetching logic
-const initialRequests = [
-  {
-    id: '1',
-    dateCreated: '2024-07-20',
-    isHouseholdHead: true,
-    relationship: 'N/A',
-    residentName: 'Juan Dela Cruz',
-    contactNumber: '09123456789',
-    address: 'Barangay 1, Street 2',
-    status: 'pending', // Example status
-  },
-  {
-    id: '2',
-    dateCreated: '2024-07-15',
-    isHouseholdHead: false,
-    relationship: 'Spouse',
-    residentName: 'Maria Clara',
-    contactNumber: '09198765432',
-    address: 'Barangay 2, Street 4',
-    status: 'pending',
-  },
-  {
-    id: '3',
-    dateCreated: '2024-07-10',
-    isHouseholdHead: true,
-    relationship: 'N/A',
-    residentName: 'Pedro Santos',
-    contactNumber: '09123334455',
-    address: 'Barangay 3, Street 5',
-    status: 'pending',
-  },
-  // Add more sample data as needed
-];
+import axios from 'axios'; // Import axios for making HTTP requests
 
 const ResidentAccountRequest = () => {
   const [filter, setFilter] = useState('all');
-  const [requests, setRequests] = useState(initialRequests);
+  const [requests, setRequests] = useState([]);
+
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const fetchRequests = () => {
+    axios.get('http://brgyapp.lesterintheclouds.com/fetchResidentRequests.php') // Adjust the URL to your backend API
+      .then(response => {
+        setRequests(response.data); // Set the fetched data
+      })
+      .catch(error => {
+        console.error('Error fetching requests:', error);
+        alert('Failed to load requests');
+      });
+  };
 
   const filterRequests = () => {
     if (filter === 'all') return requests;
@@ -79,7 +60,7 @@ const ResidentAccountRequest = () => {
                 : request
             )
           );
-        }},
+        }} ,
       ]
     );
   };
@@ -133,6 +114,7 @@ const ResidentAccountRequest = () => {
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

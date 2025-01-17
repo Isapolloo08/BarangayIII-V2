@@ -107,49 +107,114 @@ export default function Programs({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, alignItems: 'center', backgroundColor: '#f0f0f0', padding: 20 },
-  yearPickerContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.5,
-    elevation: 5,
+yearPickerContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 20,
+  marginHorizontal: 70,
+  backgroundColor: '#fff',
+  paddingHorizontal: 10,
+  borderRadius: 5,
+  borderWidth: 1,
+  borderColor: '#710808',
+  width: '100%',
+},
+yearPickerLabel: {
+  fontSize: 16,
+  color: '#710808',
+  fontWeight: 'bold',
+  flex: 1,
+},
+yearPickerRightContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  flex: 2,
+  justifyContent: 'flex-end',
+},
+selectedYearText: {
+  fontSize: 16,
+  color: '#710808',
+  fontWeight: 'bold',
+  marginRight: 10,
+},
+card: { 
+  borderRadius: 10,
+  marginBottom: 20, 
+  marginHorizontal: 70,
+  width: '100%',
+},
+title: { 
+  fontSize:20, 
+  fontWeight: 'bold', 
+  color: '#710808', 
+  marginBottom: 10 
   },
-  yearPickerLabel: { fontSize: 16, marginRight: 10, color: '#710808' },
-  card: { padding: 20, borderRadius: 10, backgroundColor: '#fff', elevation: 4, marginBottom: 20 },
-  title: { fontSize: 18, fontWeight: 'bold', color: '#710808', marginBottom: 10 },
-  programCard: { marginBottom: 10, padding: 5, backgroundColor: '#fff', borderRadius: 8, elevation: 2 },
-  programTitle: { fontSize: 16, fontWeight: 'bold', color: '#710808' },
-  programDetails: { fontSize: 14, color: '#333', marginVertical: 5 },
-
-  buttonContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 10 },
-
-  viewButton: { backgroundColor: '#710808', padding: 12, borderRadius: 5, minWidth: 100, marginHorizontal: 5 },
-
-  buttonText: { color: '#fff', fontSize: 14, textAlign: 'center' },
-  cell: { fontSize: 14, color: '#333' },
-  errorText: { color: 'red', fontSize: 16, marginTop: 10 },
+programCard: { 
+  marginBottom: 10,
+  padding: 15,
+  backgroundColor: '#fff', 
+  borderRadius: 8, 
+  elevation: 2,
+},
+programTitle: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  color: '#710808',
+},
+programDetails: {
+  fontSize: 14,
+  color: '#333',
+  marginVertical: 5,
+},
+buttonContainer: {
+  flexDirection: 'row',
+  justifyContent: 'flex-end',
+  marginTop: 10,
+},
+viewButton: {
+  backgroundColor: '#710808',
+  padding: 8,
+  borderRadius: 5,
+  minWidth: 80,
+  marginHorizontal: 5,
+},
+buttonText: {
+  color: '#fff',
+  fontSize: 14,
+  textAlign: 'center',
+},
+cell: {
+  fontSize: 14,
+  color: '#333',
+},
+errorText: {
+  color: 'red',
+  fontSize: 16,
+  marginTop: 10,
+},
 
 });
 
 const pickerSelectStyles = StyleSheet.create({
-  inputAndroid: {
-    backgroundColor: '#710808',
-    color: '#fff',
-    padding: 10,
-    borderRadius: 5,
-    width: width * 0.3,
-  },
   inputIOS: {
-    backgroundColor: '#710808',
-    color: '#fff',
-    padding: 10,
-    borderRadius: 5,
-    width: width * 0.3,
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    color: '#710808',
+    borderRadius: 4,
+    paddingRight: 30,
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    color: '#710808',
+    borderRadius: 4,
+    paddingRight: 30,
   },
 });

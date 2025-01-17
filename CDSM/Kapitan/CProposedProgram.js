@@ -17,7 +17,6 @@ const CProposedProgram = () => {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 const data = await response.json();
-                console.log('Fetched data:', data); // Check data structure
                 setPendingPrograms(data);
             } catch (err) {
                 console.error('Error fetching data:', err);
@@ -26,10 +25,17 @@ const CProposedProgram = () => {
                 setLoading(false);
             }
         };
-
+    
+        // Fetch data initially
         fetchPendingPrograms();
+    
+        // Listen for screen focus to reload data when returning from CPending screen
+        const unsubscribe = navigation.addListener('focus', fetchPendingPrograms);
+    
+        // Cleanup listener on unmount
+        return () => unsubscribe();
     }, []);
-
+    
     const getBackgroundColorForType = (type) => {
         switch (type) {
             case 'Event':

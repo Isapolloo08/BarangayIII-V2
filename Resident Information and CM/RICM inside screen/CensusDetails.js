@@ -1,211 +1,162 @@
-import React from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import axios from 'axios';
 
-const CensusDetails = ({ route, navigation }) => {
-  const { resident } = route.params;
+const CensusDetails = ({ route }) => {
+  const { residentNum } = route.params;
+  const [resident, setResident] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Utility function to safely handle undefined or null values
-  const safeValue = (value) => {
-    return value !== undefined && value !== null ? value : '';
-  };
+  useEffect(() => {
+    const fetchResidentDetails = async () => {
+      try {
+        const response = await axios.get(`http://brgyapp.lesterintheclouds.com/get_residents_details.php?residentID=${residentNum}`);
+        
+        if (response.data && response.data.resident) {
+          setResident(response.data.resident);
+        } else {
+          setError('Resident not found');
+        }
+      } catch (error) {
+        console.error('Error fetching resident details:', error.response || error.message);
+        setError('Error fetching details');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const formatDate = (date) => {
-    if (!date) return ''; // Return empty string if date is not defined
-    return new Date(date).toLocaleDateString(); // Adjust date format as needed
-  };
-
-  const handleEdit = () => {
-    // Navigate to the edit screen with the resident's data
-    navigation.navigate('EditCensusData', { resident });
-  };
+    if (residentNum) {
+      fetchResidentDetails();
+    }
+  }, [residentNum]);
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.detailsBox}>
-        <View style={styles.topContainer}>
-          <View style={styles.imageContainer}>
-            {safeValue(resident.imageUri) ? (
-              <Image source={{ uri: safeValue(resident.imageUri) }} style={styles.image} />
-            ) : (
-              <View style={styles.placeholderImage} />
-            )}
+    <View style={styles.container}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#007bff" />
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : (
+        <ScrollView style={styles.detailsContainer}>
+          <Text style={styles.title}>Resident Details</Text>
+          {/* Displaying all the resident's details */}
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Name</Text>
+            <Text style={styles.detailText}>{resident.firstname} {resident.middlename} {resident.lastname} {resident.extensionName}</Text>
           </View>
-          <View style={styles.nameContainer}>
-            <Text style={styles.nameText}>{`${safeValue(resident.firstName)} ${safeValue(resident.middleName)} ${safeValue(resident.lastName)} ${safeValue(resident.suffix)}`}</Text>
-            <Text style={styles.relationshipText}>{safeValue(resident.relationship)}</Text>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Sex</Text>
+            <Text style={styles.detailText}>{resident.sex}</Text>
           </View>
-        </View>
-        <View style={styles.detailContainer}>
-          <Text style={styles.detailLabel}>Household Head: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.householdHeadName)}</Text>
-          <Text style={styles.detailLabel}>Household Number: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.householdNumber)}</Text>
-          <Text style={styles.detailLabel}>Contact Number: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.contactNumber)}</Text>
-          <Text style={styles.detailLabel}>Address: </Text>
-          <Text style={styles.detailText}>{`${safeValue(resident.purok)}, ${safeValue(resident.barangay)}`}</Text>
-          <Text style={styles.detailLabel}>Date of Birth: </Text>
-          <Text style={styles.detailText}>{formatDate(resident.dateOfBirth)}</Text>
-          <Text style={styles.detailLabel}>Age: </Text>
-          <Text style={styles.detailText}>{`${safeValue(resident.age)}, ${safeValue(resident.classificationByAgeHealth)}`}</Text>
-          <Text style={styles.detailLabel}>Sex: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.sex)}</Text>
-          <Text style={styles.detailLabel}>Civil Status: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.civilStatus)}</Text>
-          <Text style={styles.detailLabel}>Citizenship: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.citizenship)}</Text>
-          <Text style={styles.detailLabel}>Occupation: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.occupation)}</Text>
-          <Text style={styles.detailLabel}>Educational Attainment: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.educationalAttainment)}</Text>
-          <Text style={styles.detailLabel}>Religion: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.religion)}</Text>
-          <Text style={styles.detailLabel}>Ethnicity: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.ethnicity)}</Text>
-          <Text style={styles.detailLabel}>4Ps Member: </Text>
-          <Text style={styles.detailText}>{`${safeValue(resident.psMember)} ${safeValue(resident.psHouseholdId)}`}</Text>
-          <Text style={styles.detailLabel}>Philhealth Member: </Text>
-          <Text style={styles.detailText}>{`${safeValue(resident.philhealthMember)} ${safeValue(resident.philhealthIdNumber)} ${safeValue(resident.membershipType)} ${safeValue(resident.philhealthCategory)}`}</Text>
-          <Text style={styles.detailLabel}>Medical History: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.medicalHistory)}</Text>
-          <Text style={styles.detailLabel}>LMP and Family Planning: </Text>
-          <Text style={styles.detailText}>{`${safeValue(resident.lmp)} ${safeValue(resident.usingFpMethod)} ${safeValue(resident.familyPlanningMethodUsed)} ${safeValue(resident.familyPlanningStatus)}`}</Text>
-          <Text style={styles.detailLabel}>Type of Water Source: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.typeOfWaterSource)}</Text>
-          <Text style={styles.detailLabel}>Type of Toilet Facility: </Text>
-          <Text style={styles.detailText}>{safeValue(resident.typeOfToiletFacility)}</Text>
-        </View>
-
-        <View style={styles.householdMembersContainer}>
-          <Text style={styles.sectionTitle}>Household Members:</Text>
-          {resident.householdMembers && resident.householdMembers.length > 0 ? (
-            resident.householdMembers.map((member, index) => (
-              <View key={index} style={styles.memberContainer}>
-                <Text style={styles.detailLabel}>Name: </Text>
-                <Text style={styles.detailText}>{`${safeValue(member.firstName)} ${safeValue(member.middleName)} ${safeValue(member.lastName)} ${safeValue(member.suffix)}`}</Text>
-                <Text style={styles.detailLabel}>Relationship: </Text>
-                <Text style={styles.detailText}>{safeValue(member.relationship)}</Text>
-                <Text style={styles.detailLabel}>Contact Number: </Text>
-                <Text style={styles.detailText}>{safeValue(member.contactNumber)}</Text>
-                <Text style={styles.detailLabel}>Date of Birth: </Text>
-                <Text style={styles.detailText}>{formatDate(member.dateOfBirth)}</Text>
-                <Text style={styles.detailLabel}>Age: </Text>
-                <Text style={styles.detailText}>{safeValue(member.age)}</Text>
-                <Text style={styles.detailLabel}>Sex: </Text>
-                <Text style={styles.detailText}>{safeValue(member.sex)}</Text>
-                <Text style={styles.detailLabel}>Civil Status: </Text>
-                <Text style={styles.detailText}>{safeValue(member.civilStatus)}</Text>
-                <Text style={styles.detailLabel}>Occupation: </Text>
-                <Text style={styles.detailText}>{safeValue(member.occupation)}</Text>
-                <Text style={styles.detailLabel}>Educational Attainment: </Text>
-                <Text style={styles.detailText}>{safeValue(member.educationalAttainment)}</Text>
-                <Text style={styles.detailLabel}>Religion: </Text>
-                <Text style={styles.detailText}>{safeValue(member.religion)}</Text>
-                <Text style={styles.detailLabel}>Medical History: </Text>
-                <Text style={styles.detailText}>{safeValue(member.medicalHistory)}</Text>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.noMembersText}>No household members available.</Text>
-          )}
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={handleEdit}>
-            <Text style={styles.buttonText}>Edit</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </ScrollView>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Birthdate</Text>
+            <Text style={styles.detailText}>{resident.birthdate}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Birth Place</Text>
+            <Text style={styles.detailText}>{resident.birthPlace}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Relationship</Text>
+            <Text style={styles.detailText}>{resident.relationship}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Address</Text>
+            <Text style={styles.detailText}>{resident.householdID}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Civil Status</Text>
+            <Text style={styles.detailText}>{resident.civilStatus}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Citizenship</Text>
+            <Text style={styles.detailText}>{resident.citizenship}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Occupation</Text>
+            <Text style={styles.detailText}>{resident.occupation}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Education Attainment</Text>
+            <Text style={styles.detailText}>{resident.educationAttainment}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Religion</Text>
+            <Text style={styles.detailText}>{resident.religion}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Ethnicity</Text>
+            <Text style={styles.detailText}>{resident.ethnicity}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Health ID</Text>
+            <Text style={styles.detailText}>{resident.healthID}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>User ID</Text>
+            <Text style={styles.detailText}>{resident.userID}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Date Created</Text>
+            <Text style={styles.detailText}>{resident.dateCreated}</Text>
+          </View>
+          <View style={styles.detailCard}>
+            <Text style={styles.label}>Date Updated</Text>
+            <Text style={styles.detailText}>{resident.dateUpdate}</Text>
+          </View>
+        </ScrollView>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    padding: 16,
-    backgroundColor: '#f0f0f0',
-  },
-  detailsBox: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 20,
-    marginBottom: 20,
-  },
-  topContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    borderBottomColor: 'black',
-    borderBottomWidth: 2,
-  },
-  imageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    overflow: 'hidden',
-    marginRight: 20,
-    marginBottom: 20,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  placeholderImage: {
-    width: 100,
-    height: 100,
-    backgroundColor: '#ccc',
-    borderRadius: 50,
-  },
-  nameContainer: {
     flex: 1,
+    backgroundColor: '#f4f4f4',
+    padding: 20,
   },
-  nameText: {
+  title: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  relationshipText: {
-    fontSize: 18,
-  },
-  detailContainer: {
+  detailsContainer: {
     marginTop: 10,
   },
-  detailLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  detailCard: {
+    backgroundColor: '#fff',
+    padding: 15,
+    marginBottom: 15,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#555',
     marginBottom: 5,
   },
   detailText: {
     fontSize: 18,
-    marginBottom: 15,
+    color: '#333',
   },
-  householdMembersContainer: {
-    marginTop: 20,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  memberContainer: {
-    marginBottom: 20,
-  },
-  noMembersText: {
-    fontSize: 18,
-    color: '#888',
-  },
-  buttonContainer: {
+  errorContainer: {
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    flex: 1,
   },
-  button: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: '#fff',
+  errorText: {
+    color: 'red',
     fontSize: 18,
     fontWeight: 'bold',
   },

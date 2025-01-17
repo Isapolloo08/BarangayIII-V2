@@ -7,28 +7,36 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ScrollView
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import axios from "axios";
-import { printToFileAsync, printAsync } from 'expo-print';
 
 const BlotterList = ({ navigation }) => {
   const [blotterData, setBlotterData] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [dropdownVisible, setDropdownVisible] = useState(false);
 
+  // Fetch blotter data from API
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://brgyapp.lesterintheclouds.com/fetch_blotter_list.php");
+        const response = await axios.get(
+          "http://brgyapp.lesterintheclouds.com/fetch_blotter_list.php"
+        );
         setBlotterData(response.data);
       } catch (error) {
         if (error.response) {
+          console.error("Error response:", error.response);
           setError(`Error: ${error.response.status} ${error.response.statusText}`);
         } else if (error.request) {
+          console.error("Error request:", error.request);
           setError("Network Error: No response received.");
         } else {
+          console.error("Error message:", error.message);
           setError(`Error: ${error.message}`);
         }
       } finally {
@@ -39,77 +47,19 @@ const BlotterList = ({ navigation }) => {
     fetchData();
   }, []);
 
-  const handleVisibilityClick = (caseID) => {
-    navigation.navigate('CaseReport', { caseID });
+  const goToAnotherScreen = () => {
+    navigation.navigate("BlotterForm");
   };
 
-  const printBlotter = async () => {
-    if (blotterData.length === 0) {
-      Alert.alert('No data available to print.');
-      return;
-    }
+  // Handle visibility click for individual blotter items
+  const handleVisibilityClick = (caseID) => {
+    navigation.navigate("CaseReport", { caseID });
+  };
 
-    const htmlTable = `
-      <html>
-        <head>
-          <style>
-            table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-            th, td {
-              border: 1px solid #ddd;
-              padding: 8px;
-              text-align: center;
-            }
-            th {
-              background-color: #800000;
-              color: white;
-            }
-            h2 {
-              text-align: center;
-              padding-top: 15px;
-            }
-          </style>
-        </head>
-        <body>
-          <h2>Blotter Data</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Incident ID</th>
-                <th>Date Occurred</th>
-                <th>Status</th>
-                <th>Process</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${blotterData
-                .map(item => `
-                  <tr>
-                    <td>${item.caseID}</td>
-                    <td>${item.dateOccured}</td>
-                    <td>${item.status}</td>
-                    <td>${item.proccess}</td>
-                  </tr>
-                `)
-                .join('')}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-
-    try {
-      const file = await printToFileAsync({
-        html: htmlTable,
-        base64: false,
-      });
-
-      await printAsync({ uri: file.uri });
-    } catch (error) {
-      console.error('Error printing blotter:', error);
-    }
+  // Function to handle dropdown selection
+  const handleFilterSelect = (filter) => {
+    setSelectedFilter(filter);
+    setDropdownVisible(false);
   };
 
   const renderBlotterItem = ({ item }) => (
@@ -122,17 +72,22 @@ const BlotterList = ({ navigation }) => {
         <TouchableOpacity onPress={() => handleVisibilityClick(item.caseID)}>
           <Icon name="visibility" size={20} color="#000" />
         </TouchableOpacity>
-       
       </View>
     </View>
   );
 
-  const filteredData = blotterData.filter((item) =>
-    item.proccess?.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const filteredData = blotterData.filter((item) => {
+    const matchesSearch = item.proccess?.toLowerCase().includes(searchText.toLowerCase());
+    if (selectedFilter === "All") return matchesSearch;
+    return item.status === selectedFilter;
+  });
 
   if (loading) {
-    return <Text>Loading...</Text>;
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading data, please wait...</Text>
+      </View>
+    );
   }
 
   if (error) {
@@ -148,20 +103,43 @@ const BlotterList = ({ navigation }) => {
           value={searchText}
           onChangeText={setSearchText}
         />
-        <TouchableOpacity style={styles.dropdown}>
-          <Text style={styles.dropdownText}>All</Text>
+        <TouchableOpacity
+          style={styles.dropdown}
+          onPress={() => setDropdownVisible(!dropdownVisible)}
+        >
+          <Text style={styles.dropdownText}>{selectedFilter}</Text>
           <Icon name="arrow-drop-down" size={20} color="#000" />
         </TouchableOpacity>
       </View>
 
+      {dropdownVisible && (
+        <View style={styles.dropdownMenu}>
+          <ScrollView>
+          {["All", "Pending", "Under Investigation", "Mediation", "Re- evaluate", "1st Hearing", "2nd Hearing", "3rd Hearing", "Resolved", "Referred to Higher Authority"].map((filter) => (
+            <TouchableOpacity
+              key={filter}
+              style={styles.dropdownItem}
+              onPress={() => handleFilterSelect(filter)}
+            >
+              <Text style={styles.dropdownItemText}>{filter}</Text>
+            </TouchableOpacity>
+          ))}
+          </ScrollView>
+        </View>
+      )}
+
       <View style={styles.tableHeader}>
-        {["Incident ID", "Date", "Status", "Process", "Action"].map((header) => (
-          <Text key={header} style={styles.headerCell}>{header}</Text>
+        {["Incident ID", "Date", "Status", "Reported By", "Action"].map((header) => (
+          <Text key={header} style={styles.headerCell}>
+            {header}
+          </Text>
         ))}
       </View>
 
       {filteredData.length === 0 ? (
-        <Text>No results found.</Text>
+        <View style={styles.noResultsContainer}>
+          <Text style={styles.noResultsText}>No results found.</Text>
+        </View>
       ) : (
         <FlatList
           data={filteredData}
@@ -171,8 +149,8 @@ const BlotterList = ({ navigation }) => {
         />
       )}
 
-      <TouchableOpacity style={styles.addButton} onPress={printBlotter}>
-        <Icon name="print" size={30} color="#fff" />
+      <TouchableOpacity style={styles.addButton} onPress={goToAnotherScreen}>
+        <Icon name="add" size={30} color="#fff" />
       </TouchableOpacity>
     </View>
   );
@@ -182,6 +160,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
+  },
+  header: {
+    backgroundColor: "#800000",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15,
+  },
+  headerTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginLeft: 15,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#800000",
   },
   searchContainer: {
     flexDirection: "row",
@@ -208,6 +208,33 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     marginRight: 5,
+  },
+  dropdownMenu: {
+    backgroundColor: "#fff",
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    marginHorizontal: 10,
+    marginTop: 5,
+    marginBottom: 5,
+    maxHeight: 100
+  },
+  dropdownItem: {
+    padding: 10,
+  },
+  dropdownItemText: {
+    fontSize: 14,
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  noResultsText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#800000",
   },
   tableHeader: {
     flexDirection: "row",

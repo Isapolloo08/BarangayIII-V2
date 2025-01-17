@@ -20,7 +20,7 @@ export default function ViewProgram({ route, navigation }) {
     note,
     beneficiaries,
     status,
-  } = route.params; // Assuming the program details are passed as params
+  } = route.params; 
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -35,16 +35,11 @@ export default function ViewProgram({ route, navigation }) {
         <TextInputLabel label="Budget" value={`₱${budget}`} />
         <TextInputLabel label="Note" value={note || 'N/A'} />
         <TextInputLabel label="Beneficiaries" value={beneficiaries || 'N/A'} />
-
-        {/* Update status to display as a text label */}
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusLabel}>Status:</Text>
-          <Text style={styles.statusValue}>{status}</Text>
-        </View>
+        <TextInputLabel label="Status" value={status || 'N/A'} />
 
         <View style={styles.footer}>
           <TouchableOpacity
-            style={styles.cancelButton}
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
             <Text style={styles.buttonText}>Back</Text>
@@ -55,11 +50,12 @@ export default function ViewProgram({ route, navigation }) {
   );
 }
 
-// Reusable component to display label and value in a formatted way
 const TextInputLabel = ({ label, value }) => (
   <View style={styles.inputContainer}>
     <Text style={styles.label}>{label}:</Text>
-    <Text style={styles.value}>{value}</Text>
+    <View style={styles.inputBox}>
+      <Text style={styles.value}>{value}</Text>
+    </View>
   </View>
 );
 
@@ -68,55 +64,51 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    padding: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 20,
   },
   formContainer: {
     width: '100%',
-    maxWidth: 340,
+    padding: 20,
   },
   inputContainer: {
-    marginBottom: 15,
+    marginBottom: 20,
   },
   label: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '600',
     color: '#710808',
+    marginBottom: 5,
+  },
+  inputBox: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    backgroundColor: '#f9f9f9',
   },
   value: {
     fontSize: 16,
     color: '#333',
-    marginTop: 5,
-  },
-  statusContainer: {
-    marginBottom: 15,
-  },
-  statusLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#710808',
-  },
-  statusValue: {
-    fontSize: 16,
-    color: '#333',
-    marginTop: 5,
-  },
-  buttonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
   },
   footer: {
     width: '100%',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
+    marginTop: 10,
   },
-  cancelButton: {
-    width: '48%',
-    padding: 15,
-    borderRadius: 10,
+  backButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 6,
     backgroundColor: '#bdc3c7',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  buttonText: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });

@@ -1,20 +1,35 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import axios from 'axios';
 
 const KagawadRegistrationProfiling = () => {
   const navigation = useNavigation();
 
-  const [residentsData, setResidentsData] = useState([
-    { id: 1, firstName: 'John', lastName: 'Doe', middleName: 'A', suffix: 'Jr.', age: '19', purok: 'Purok 1', barangay: 'Barangay 1', sex: 'Male', contactNumber: '0965874126852', isHouseholdHead: 'No', householdHeadName: 'Jay Doe', relationship: 'Son', householdNumber: '2024-25698' },
-    { id: 2, firstName: 'Jane', lastName: 'Smith', middleName: '', suffix: '', age: '20', purok: 'Purok 2', barangay: 'Barangay 2', sex: 'Female', contactNumber: '0965874126984', isHouseholdHead: 'Yes', householdNumber: '2024-25698' },
-  ]);
-
-  const headers = ['Name', 'Age', 'Address', 'Sex'];
+  // State for storing residents data
+  const [residentsData, setResidentsData] = useState([]);
+  const [loading, setLoading] = useState(true); // State to track loading state
+  const [error, setError] = useState(null); // State to track any errors
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [filterBySex, setFilterBySex] = useState(null);
+
+  const headers = ['Name', 'Age', 'Address', 'Sex'];
+
+  // Fetch resident data from database
+  useEffect(() => {
+    axios
+      .get('http://brgyapp.lesterintheclouds.com/k_residents.php') // Update with your correct endpoint
+      .then((response) => {
+        setResidentsData(response.data); // Assuming the response is in the format [{}, {}, ...]
+        setLoading(false);
+      })
+      .catch((error) => {
+        setError('Failed to load data');
+        setLoading(false);
+      });
+  }, []);
 
   const navigateToDetails = (resident) => {
     navigation.navigate('KagawadResidentDetails', { resident });
@@ -52,6 +67,22 @@ const KagawadRegistrationProfiling = () => {
   };
 
   const filteredResidents = residentsData.filter(applyFilters);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text>{error}</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

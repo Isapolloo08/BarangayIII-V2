@@ -130,7 +130,6 @@ export default function FinancialReports({ navigation }) {
     }
   };
 
-
   return (
     <View style={styles.container}>
       <View style={styles.yearPickerContainer}>
@@ -188,17 +187,18 @@ export default function FinancialReports({ navigation }) {
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={styles.addButton}
-                onPress={() => navigation?.navigate('financialadd')}>
+                onPress={() => navigation?.navigate('Financial Add')}>
                 <Text style={styles.addButtonText}>Add Financial Report</Text>
               </TouchableOpacity>
             </View>
       
             {/* Print */}            
             <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.addButton} onPress={PrintFinancialReport}>
-          <Icon name="print" size={20} color="#fff" />
-          <Text style={styles.addButtonText}>Print</Text>
-        </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.printButton} onPress={PrintFinancialReport}>
+                <Icon name="print" size={20} color="#fff" />
+                <Text style={styles.addButtonText}>Print</Text>
+              </TouchableOpacity>
             </View>
     </View>
   );
@@ -211,42 +211,50 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   yearPickerContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    marginBottom: 20, 
+    alignItems: 'center', 
     marginBottom: 20,
-    marginLeft: 5,
-    marginRight: 5,
-    backgroundColor: '#710808',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#710808', 
+    width: '100%', 
+    height: 60, 
   },
   yearPickerLabel: {
-    fontSize: 16,
-    marginLeft: 50,
-    color: '#fff',
+    fontSize: 16, 
+    color: '#710808', 
+    fontWeight: 'bold', 
     flex: 1,
-    textAlign: 'center',
   },
   reportTypePickerContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    marginBottom: 20, 
+    alignItems: 'center', 
     marginBottom: 20,
-    marginLeft: 5,
-    marginRight: 5,
-    backgroundColor: '#710808',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#710808', 
+    width: '100%', 
+    height: 60, 
   },
   reportTypePickerLabel: {
-    fontSize: 16,
-    marginLeft: 50,
-    color: '#fff',
+    fontSize: 16, 
+    color: '#710808', 
+    fontWeight: 'bold', 
     flex: 1,
-    textAlign: 'center',
   },
+
   tableContainer: {
     width: '100%',
     flex: 1,
     marginTop: 10,
-    paddingBottom: 70,
   },
   table: {
     width: '100%',

@@ -123,12 +123,22 @@ const ProposeEvent = ({ navigation }) => {
   };
 
   const formatDateTime = (dateTime, isAllDay) => {
-    const options = isAllDay
-      ? { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' }
-      : { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric' };
-
-    return dateTime.toLocaleDateString('en-US', options);
+    const year = dateTime.getFullYear();
+    const month = String(dateTime.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(dateTime.getDate()).padStart(2, '0');
+    const hours = String(dateTime.getHours()).padStart(2, '0');
+    const minutes = String(dateTime.getMinutes()).padStart(2, '0');
+    const seconds = String(dateTime.getSeconds()).padStart(2, '0');
+  
+    if (isAllDay) {
+      // Format for all-day events, without time
+      return `${year}-${month}-${day} 00:00:00`; // Default to midnight for all-day events
+    } else {
+      // Full date-time format for specific start and end times
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
   };
+  
 
   return (
     <KeyboardAvoidingView

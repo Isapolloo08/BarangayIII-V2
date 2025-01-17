@@ -1,10 +1,11 @@
 {
   "expo": {
+    "host": "tunnel",
     "name": "BarangayIII",
     "slug": "BarangayIII",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/logo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,11 +14,18 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.andriemark24.barangayiii",
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
+      "usesCleartextTraffic": true
     },
     "web": {
+      "orientation": "portrait",
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
@@ -27,7 +35,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -37,6 +45,17 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "b5ac72e9-d227-4520-bf3a-52d5291b03d7"
+      },
+      "apiUrl": "http://brgyapp.lesterintheclouds.com"
+    },
+    "sdkVersion": "52.0.0",
+    "assetBundlePatterns": ["**/*"]
   }
 }

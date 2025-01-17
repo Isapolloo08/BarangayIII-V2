@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import axios from 'axios';
 
 const KagawadCensusDetails = ({ route }) => {
-  const { resident } = route.params;
+  const { residentId } = route.params;
+  const [resident, setResident] = useState(null);
 
   // Utility function to safely handle undefined or null values
   const safeValue = (value) => {
@@ -13,6 +15,28 @@ const KagawadCensusDetails = ({ route }) => {
     if (!date) return ''; // Return empty string if date is not defined
     return new Date(date).toLocaleDateString(); // Adjust date format as needed
   };
+
+  // Fetch resident data based on the residentId passed from the previous screen
+  const fetchResidentDetails = async () => {
+    try {
+      const response = await axios.get(`http://brgyapp.lesterintheclouds.com/get_details.php?id=${residentId}`);
+      setResident(response.data);
+    } catch (error) {
+      console.error('Error fetching resident details:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchResidentDetails();
+  }, [residentId]);
+
+  if (!resident) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -137,6 +161,11 @@ const styles = StyleSheet.create({
     borderBottomColor: 'black',
     paddingBottom: 10,
     marginTop: 5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

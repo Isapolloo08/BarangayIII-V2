@@ -253,20 +253,37 @@ const styles = StyleSheet.create({
   container: { flexGrow: 1, alignItems: 'center', backgroundColor: '#f0f0f0', padding: 20 },
   yearPickerContainer: { 
     flexDirection: 'row', 
+    justifyContent: 'space-between',
     marginBottom: 20, 
     alignItems: 'center', 
-    backgroundColor: '#710808',  // Red background for the picker container
-    paddingHorizontal: 15,
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
     borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#710808', 
     width: '100%', 
+    height: 60, 
   },
   yearPickerLabel: { 
     fontSize: 16, 
-    marginLeft: 60, 
-    marginRight: 10, 
-    color: '#fff', 
+    color: '#710808', 
+    fontWeight: 'bold', 
     flex: 1, 
   },
+  yearPickerRightContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    flex: 2, 
+    justifyContent: 'flex-end', 
+  },
+  selectedYearText: { 
+    fontSize: 16, 
+    color: '#710808', 
+    fontWeight: 'bold', 
+    marginRight: 10,
+  },
+
   chartContainer: { marginTop: 20, alignItems: 'center' },
   errorText: { color: 'red', fontSize: 16, marginTop: 10 },
   addBudgetCard: { 
@@ -280,7 +297,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
-    width: '80%',  
+    width: '100%',  
     alignItems: 'center',
   },
   addButtonText: {
@@ -298,7 +315,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
-    width: '80%',
+    width: '100%',
     alignItems: 'center',
   },
   navigateButtonText: {

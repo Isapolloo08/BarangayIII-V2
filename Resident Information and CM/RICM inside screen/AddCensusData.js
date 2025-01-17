@@ -2,7 +2,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useState } from 'react';
 import { Alert, Button, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import Pagination from './Pagination'; // Adjust the path if necessary
+import Pagination from './Pagination';
+import axios from 'axios';
 
 const AddCensusData = ({ navigation, route }) => {
     const { addNewCensusData } = route.params;
@@ -234,9 +235,35 @@ const AddCensusData = ({ navigation, route }) => {
         return true;
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (validateHouseholdHead() && validateHouseholdMembers()) {
             setIsSaveModalVisible(true);
+    
+            // Combine household head and members data
+            const formData = {
+                householdHead: householdHeadData,
+                householdMembers: householdMembers,
+            };
+    
+            try {
+                // Send POST request to the backend API
+                const response = await axios.post('http://brgyapp.lesterintheclouds.com/add_census_data.php', formData);
+    
+                // Handle the response from the backend
+                if (response.data.success) {
+                    Alert.alert('Success', 'Census data added successfully!');
+                    // Optionally, navigate to another screen or reset form data
+                    setHouseholdHeadData({});
+                    setHouseholdMembers([]);
+                } else {
+                    Alert.alert('Error', 'Failed to add census data. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error saving data:', error);
+                Alert.alert('Error', 'An error occurred while saving data.');
+            } finally {
+                setIsSaveModalVisible(false);
+            }
         }
     };
 
@@ -283,7 +310,6 @@ const AddCensusData = ({ navigation, route }) => {
             typeOfToiletFacility,
         };
         addNewCensusData(newCensus);
-        navigation.goBack();
     };
 
     const handleRelationshipSelection = (item) => {
@@ -2885,17 +2911,16 @@ const AddCensusData = ({ navigation, route }) => {
                         </View>
                     </Modal>
 
-                    {/* Error Message */}
                     {showError && (
                         <Text style={styles.errorText}>Please fill in all the information and upload an image.</Text>
                     )}
 
                     <Pagination
-                        totalPages={totalPages}
-                        currentPage={currentPage}
-                        onPageChange={handlePageChange}
-                        onSave={handleSave}
-                        containerStyle={styles.paginationContainer}
+                    totalPages={totalPages}
+                    currentPage={currentPage}
+                    onPageChange={handlePageChange}
+                    onSave={handleSave}
+                    containerStyle={styles.paginationContainer}
                     />
                 </View>
             </View>

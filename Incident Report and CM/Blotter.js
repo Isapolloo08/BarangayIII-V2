@@ -1,18 +1,18 @@
-// Blotter.js
+// BlotterForm.js
 import React, { useEffect, useState } from 'react'
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, TextInput, FlatList, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, TextInput, FlatList, Modal, Alert, Image } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Dropdown, MultiSelect } from 'react-native-element-dropdown'
 import Checkbox from 'expo-checkbox';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import axios from 'axios';
 import * as ImagePicker from "expo-image-picker";
-import * as SecureStore from 'expo-secure-store';
+// import * as SecureStore from 'expo-secure-store';
 import { getAuthData } from '../SecureStoreage/secureStoreHelpers';
+import { useFocusEffect } from '@react-navigation/native';
 
-
-const Blotter = () => {
+const BlotterForm = ({ navigation }) => {
   const [newdate, dateSelected] = useState('MM/DD/YYYY')
   const [newhour, hourSelected] = useState('HH')
   const [newminute, minuteSelected] = useState('MM')
@@ -48,10 +48,54 @@ const Blotter = () => {
   const [searchRespondentResult, setSearchRespondentResult] = useState([]);
   const [respondentID, setRespondentID] = useState(null);
   const [selectedImages, setSelectedImages] = useState([]);
+  const [selectedImagesToShow, setSelectedImagesToShow] = useState([]);
   const [userIDD, setUserIDD] = useState(null);
   const [isVisible, setIsVisible] = useState(true);
+  const [modalQuestion, setModalQuestion] = useState(false);
+  const [actionType, setActionType] = useState('');
+  const [userRole, setUserRole] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const resetForm = () => {
+    dateSelected('MM/DD/YYYY');
+    hourSelected('HH');
+    minuteSelected('MM');
+    periodSelected('AM');
+    setSelectedPlace(null);
+    setSelectedProceed(null);
+    setSelectedIncident([]);
+    setDescription('');
+    setPhoneNumber('');
+    setChecked(false);
+    setRespoInfoArray([]);
+    setResiInfo('');
+    setIsRender(false);
+    setIsModalVisible(false);
+    setInputName('');
+    setEditName('');
+    setShow(false);
+    setMode('date');
+    setDate(new Date());
+    setIsFocus(false);
+    setSearchResults([]);
+    setIsLoading(false);
+    setSearchRespondentResult([]);
+    setRespondentID(null);
+    setSelectedImages([]);
+    setSelectedImagesToShow()
+    setUserIDD(null);
+    setModalQuestion(false);
+    setActionType('');
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      resetForm();
+    }, [])
+  );
 
   useEffect(() => {
+    console.log(newdate);
     getPlacess();
     getIncident();
     getUserData();
@@ -74,6 +118,7 @@ const Blotter = () => {
               setIsEditable(false);
               setisEdit(false);
               setIsVisible(prevState => !prevState);
+              setUserRole(response.data.data.role);
             }
             else{
               console.log(response.data.data.role);
@@ -112,7 +157,21 @@ const Blotter = () => {
   }
 
   const submitReport = () => {
-    console.log(selectedProceed);
+    // console.log(newdate);
+    // console.log(newhour);
+    // console.log(newminute);
+    // console.log(selectedPlace);
+    // console.log(selectedIncident);
+    // console.log(description);
+    // console.log(complainName);
+    // console.log(phoneNumber);
+    // console.log(address);
+    // console.log(resID);
+    // console.log(respoInfoArray);
+    // console.log(addressID);
+    // console.log(selectedImages);
+    // console.log(selectedProceed);
+    // console.log(userIDD);
     if (
       newdate === 'MM/DD/YYYY' || 
       newhour === 'HH' || 
@@ -128,19 +187,50 @@ const Blotter = () => {
       return;
     }
 
-    // console.log(selectedIncident);
-    console.log("sumbitss");
+    console.log('submits');
+
     axios.post('http://brgyapp.lesterintheclouds.com/submitBlotter.php', {
       newdate, newhour, newminute, newPeriod, selectedPlace, selectedIncident, description, complainName, phoneNumber, resID, addressID, address, respoInfoArray, selectedImages, selectedProceed, userIDD})
     .then(response=>{
       if(response.data.success){
-        Alert.alert('Succesful', response.data.message);
+        console.log(response.data.message);
+        handleAction('successful');
       }
       else{
         Alert.alert('Faileds', response.data.message);
       }
     })
   }
+  const handleAction = (action) => {
+    setActionType(action);
+    setModalQuestion(true);
+  };
+
+  const handleModalConfirm = () => {
+    console.log(` Action Type: ${actionType}`);
+    if (actionType === 'submit') {
+      console.log('submit');
+      submitReport();
+    }
+    else if(actionType === 'cancel'){
+      console.log('Going back to the previous page...');
+      navigation.goBack();
+    }
+    else{
+      if(userRole === 'resident'){
+        navigation.replace("Case List");
+      }
+      else{
+        navigation.replace('BLOTTER LIST');
+      }
+      
+    }
+    setModalQuestion(false);
+  };
+
+  const handleModalCancel = () => {
+    setModalQuestion(false);
+  };
   
   const datass = [
     { label: 'Under Investigation', value: 'Under Investigation' },
@@ -233,27 +323,28 @@ const Blotter = () => {
 
   const onChanges = (event, selectedDate) => {
     if(event.type === 'set'){
-        if(mode == 'date'){
-            const currentDate = selectedDate || date;
-            let tempDate = new Date(currentDate);
-            let fDate = (tempDate.getMonth() + 1) + '/' + tempDate.getDate() + '/' + tempDate.getFullYear();
-            dateSelected(fDate);
-        }
-        else{
-            const currentDate = selectedDate || date;
-            let tempDate = new Date(currentDate);
-            let sHour = tempDate.getHours();
-            sHour = sHour % 12;
-            sHour = sHour ? sHour : 12;
-            hourSelected(sHour); 
+      setDate(selectedDate || date);
+      if(mode == 'date'){
+          const currentDate = selectedDate || date;
+          let tempDate = new Date(currentDate);
+          let fDate = (tempDate.getMonth() + 1) + '/' + tempDate.getDate() + '/' + tempDate.getFullYear();
+          dateSelected(fDate);
+      }
+      else{
+          const currentDate = selectedDate || date;
+          let tempDate = new Date(currentDate);
+          let sHour = tempDate.getHours();
+          sHour = sHour % 12;
+          sHour = sHour ? sHour : 12;
+          hourSelected(sHour); 
 
-            let sMinute = tempDate.getMinutes();
-            let formattedMinute = sMinute.toString().padStart(2, '0');
-            minuteSelected(formattedMinute);
+          let sMinute = tempDate.getMinutes();
+          let formattedMinute = sMinute.toString().padStart(2, '0');
+          minuteSelected(formattedMinute);
 
-            let period = tempDate.getHours() >= 12 ? 'PM' : 'AM';
-            periodSelected(period);
-        }
+          let period = tempDate.getHours() >= 12 ? 'PM' : 'AM';
+          periodSelected(period);
+      }
     }
     setShow(false);
   }
@@ -339,16 +430,25 @@ const Blotter = () => {
   };
 
   const pickImageFromGallery = async () => {
+    // Request permission to access the media library
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      alert('Permission to access media library is required!');
+      return;
+    }
+
+    // Launch image picker
     let results = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
-    })
+    });
 
     if (!results.canceled) {
       // Append the new image URI to the existing array
-      setSelectedImages((prevImages) => [...prevImages, results.assets[0].uri]);
+      const imageUri = results.assets[0].uri;
+      setSelectedImages((prevImages) => [...prevImages, imageUri]);
     }
   };
 
@@ -370,8 +470,7 @@ const Blotter = () => {
 
     if (!result.canceled) {
       const imageUri = result.assets[0].uri;
-      setSelectedImage(imageUri);
-      console.log("Captured Image URI:", imageUri); // Print the URI to the console
+      setSelectedImagse(imageUri);
     }
   };
 
@@ -379,6 +478,8 @@ const Blotter = () => {
     setChecked(newValue);
     console.log("hiii");
     setRespoInfoArray([]);
+    setSearchRespondentResult([]);
+    setResiInfo('');
   };
 
   const handleFocus = () => {
@@ -404,6 +505,11 @@ const Blotter = () => {
       const formatted = phoneNumber.replace(/(\+63)(\d{3})(\d{3})(\d{4})/, '+63 $2 $3 $4');
       setPhoneNumber(formatted);
     }
+  };
+
+  const handleImagePress = (uri) => {
+    setSelectedImagesToShow(uri);
+    setModalVisible(true);
   };
 
   return (
@@ -447,7 +553,7 @@ const Blotter = () => {
                           date.getFullYear() === currentDate.getFullYear();
 
                           if(isToday && selectedDate.toLocaleTimeString() > currentDate.toLocaleTimeString()){
-                            console.log("hiii");
+                            console.log(selectedDate.toLocaleTimeString());
                             Alert.alert("Invalid Time",
                               "You can't select a future time!",
                               [
@@ -584,6 +690,7 @@ const Blotter = () => {
                 </View>
             </TouchableOpacity>
           </View>
+          
           <View style={styles.tableContainer}>
             <View style={styles.listContainer}>
               <View style={styles.headers}>
@@ -651,15 +758,59 @@ const Blotter = () => {
           </View>
         </View>
 
-        <View style={styles.proofSection}>
-          <Text style={styles.sectionText}>Upload Photos/Videos (Optional)</Text>
-          <TouchableOpacity style={styles.imagePickerBackground} onPress={pickImageFromGallery}>
-            <View style={{flexDirection: 'row', flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-              <Ionicons name='camera-outline' size={20} style={{color: '#710808'}}/>
-              <Text style={{fontSize: 16, color: '#710808', marginLeft: 5}}>Upload Photos/Video</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+
+        {selectedImages.length > 0 ? (
+          <View style={styles.proofSection}>
+            <Text style={styles.sectionText}>Upload Photos/Videos (Optional)</Text>
+            <TouchableOpacity style={styles.imagePickerBackground} onPress={pickImageFromGallery}>
+              <FlatList
+                scrollEnabled={false}
+                data={selectedImages}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <View style={{marginVertical: 5}}>
+                    <TouchableOpacity onPress={() => handleImagePress(item)}>
+                      <Text style={{ textAlign: 'center', borderWidth: 1, borderRadius: 10 }}>{item}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.proofSection}>
+            <Text style={styles.sectionText}>Upload Photos/Videos (Optional)</Text>
+            <TouchableOpacity style={styles.imagePickerBackground} onPress={pickImageFromGallery}>
+              <View style={{flexDirection: 'row', flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+                <Ionicons name='camera-outline' size={20} style={{color: '#710808'}}/>
+                <Text style={{fontSize: 16, color: '#710808', marginLeft: 5}}>Upload Photos/Video</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainers}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons name="close-circle" size={36} color="#fff" />
+            </TouchableOpacity>
+            <Image
+              source={{ uri: selectedImagesToShow }}
+              style={styles.modalImage}
+              resizeMode="contain"
+            />
+          </View>
+          
+        </Modal>
+
 
         {isVisible && (
           <View style={styles.proceedTos}>
@@ -685,14 +836,70 @@ const Blotter = () => {
         )}
 
         <View style={styles.canSub}>
-          <TouchableOpacity style={styles.cancelBTN}>
-              <Ionicons name='close' size={20} style={{color: '#710808'}}/>
-              <Text style={{color: '#710808', fontSize: 14}}>Cancel</Text>
+          <TouchableOpacity style={styles.cancelBTN} onPress={() => handleAction('cancel')}>
+            <Ionicons name='close' size={20} style={{color: '#710808'}}/>
+            <Text style={{color: '#710808', fontSize: 14}}>Cancel</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.submitBTN}>
+          <TouchableOpacity style={styles.submitBTN} onPress={() => handleAction('submit')}>
             <Ionicons name='checkmark' size={20} style={{color: '#fff'}}/>
-            <Text style={{color: 'white', fontSize: 14}} onPress={() => submitReport()}>Submit</Text>
+            <Text style={{color: 'white', fontSize: 14}}>Submit</Text>
           </TouchableOpacity>
+          <Modal
+            visible={modalQuestion}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setModalQuestion(false)}
+          >
+            <View style={styles.modalBackground}>
+              <View style={styles.modalContainer}>
+                <Ionicons
+                  name={
+                    actionType === 'cancel' ? 'close-circle' :
+                    actionType === 'submit' ? 'warning' : 
+                    actionType === 'successful' ? 'checkmark-circle' : ''
+                  }
+                  size={50}
+                  style={{
+                    color: actionType === 'cancel' ? '#710808' : 
+                          actionType === 'submit' ? '#710808' : 
+                          actionType === 'successful' ? '#710808' : '',
+                    marginRight: 10,
+                  }}
+                />
+                <Text style={styles.modalTitle}>
+                  {actionType === 'cancel' ? 'Are you sure you want to Cancel?' :
+                  actionType === 'submit' ? 'Are you sure you want to submit this report?' :
+                  actionType === 'successful' ? 'Submit Successful!' : ''}
+                </Text>
+                <View style={styles.modalActions}>
+                {actionType === 'successful' ? (
+                  <TouchableOpacity
+                    style={styles.submitBTN}
+                    onPress={handleModalConfirm}
+                  >
+                    <Text style={{ color: 'white', fontSize: 16 }}>OK</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      style={styles.cancelBTN}
+                      onPress={handleModalCancel}
+                    >
+                      <Text style={{ color: '#710808', fontSize: 16 }}>No</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.submitBTN}
+                      onPress={handleModalConfirm}
+                    >
+                      <Text style={{ color: 'white', fontSize: 16 }}>Yes</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+                </View>
+              </View>
+            </View>
+          </Modal>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -864,8 +1071,14 @@ const styles = StyleSheet.create({
   },
   imagePickerBackground: {
     backgroundColor: '#F4EAEA',
-    borderRadius: 5,
-    minHeight: 100
+    borderRadius: 10,
+    marginBottom: 10,
+    minHeight: 100,
+    marginTop: 10,
+    borderWidth: 1,
+    paddingHorizontal: 35,
+    borderColor: "#750000"
+
   },
   proceedTos: {
     display: 'flex',
@@ -912,7 +1125,51 @@ const styles = StyleSheet.create({
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginTop: 10,
+    marginBottom: 30,
+    textAlign: 'center'
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    width: '100%',
+  },
+  warningIcon: {
+    color: '#F39C12',
+    marginBottom: 20,
+  },
+  modalContainers: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+  },
+  modalImage: {
+    width: "90%",
+    height: "70%",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 30,
+    right: 30,
   }
 });
 
-export default Blotter;
+export default BlotterForm;

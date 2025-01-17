@@ -1,20 +1,30 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import axios from 'axios';
 
 const KagawadCensusData = () => {
   const navigation = useNavigation();
-
-  const [residentsData, setResidentsData] = useState([
-    { id: 1, firstName: 'John', lastName: 'Doe', middleName: 'A', suffix: 'Jr.', age: '60', purok: 'Purok 1', barangay: 'Barangay 1', sex: 'Male', contactNumber: '0965874126852', isHouseholdHead: 'No', householdHeadName: 'Jay Doe', relationship: 'Son', householdNumber: '2024-25698', lmp: null },
-    { id: 2, firstName: 'Jane', lastName: 'Smith', middleName: '', suffix: '', age: '20', purok: 'Purok 2', barangay: 'Barangay 2', sex: 'Female', contactNumber: '0965874126984', isHouseholdHead: 'Yes', householdHeadName: '', householdNumber: '2024-25698', lmp: '2024-06-01' },
-  ]);
-
-  const headers = ['Name', 'Age', 'Address', 'Sex'];
-
+  const [residentsData, setResidentsData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [filterByCategory, setFilterByCategory] = useState(null);
+
+  const headers = ['Name', 'Age', 'Address', 'Sex'];
+
+  // Fetch resident data from the database
+  const fetchResidentsData = async () => {
+    try {
+      const response = await axios.get('http://brgyapp.lesterintheclouds.com/getResidents.php');
+      setResidentsData(response.data);
+    } catch (error) {
+      console.error('Error fetching resident data:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchResidentsData();
+  }, []);
 
   const navigateToDetails = (resident) => {
     navigation.navigate('KagawadCensusDetails', { resident });

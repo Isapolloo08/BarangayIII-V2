@@ -1,37 +1,73 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
-import { Ionicons } from "@expo/vector-icons"; 
+import { Ionicons } from "@expo/vector-icons";
+import axios from "axios";
+import { getAuthData } from "../SecureStoreage/secureStoreHelpers";
 
 function CaseListScreen(props) {
 
-    const caseData = [
-        {
-          id: "INC-20240001",
-          type: "Theft",
-          status: "PENDING",
-        },
-      ];
-    
-      const renderCaseItem = ({ item }) => (
-        <View style={styles.card}>
-          <View style={styles.caseDetails}>
-            <Text style={styles.caseText}>
-              <Text style={styles.label}>Incident ID: </Text> {item.id}
-            </Text>
-            <Text style={styles.caseText}>
-              <Text style={styles.label}>Case Type: </Text> {item.type}
-            </Text>
-          </View>
-          <View style={styles.statusContainer}>
-            <Text style={styles.status}>{item.status}</Text>
-            <Text style={styles.dateLabel}>Date</Text>
-          </View>
-        </View>
-      );
+  const [blotterDatas, setBlotterDatas] = useState([]);
+  const [fetchingData, setFetchingData] = useState(true);
 
-    return (
-        <View style={styles.container}>
+  useEffect(() => {
+    const getUserData = async () => {
+      const keys = 'UserID';
+      try {
+        const userData = await getAuthData(keys);
+        if (userData) {
+          fetchBloterData(userData);
+        }
+      } catch (error) {
+        console.error('Error retrieving authentication data:', error);
+      }
+    }
+
+    const fetchBloterData = async (userID) => {
+      try {
+        const response = await axios.post("http://brgyapp.lesterintheclouds.com/getCaseReported.php", {userID}); // Update with your actual domain
+        if (response.data.status === "success") {
+          setBlotterDatas(response.data.data);
+        } else {
+          console.log('No data found for this user.');
+        }
+      } catch (error) {
+        console.error('Error response:', error.response);
+      } finally{
+        setFetchingData(false);
+      }
+    }
+
+    getUserData();
+  }, []);
     
+  const renderCaseItem = ({ item }) => (
+    <View style={styles.card}>
+      <View style={styles.caseDetails}>
+        <Text style={styles.caseText}>
+          <Text style={styles.label}>Incident ID: </Text> {item.caseID}
+        </Text>
+        <Text style={styles.caseText}>
+          <Text style={styles.label}>Case Type: </Text> {item.incidentNames}
+        </Text>
+      </View>
+      <View style={styles.statusContainer}>
+        <Text style={styles.status}>{item.status}</Text>
+        <Text style={styles.dateLabel}>{item.dateOccured}</Text>
+      </View>
+    </View>
+  );
+
+  if(fetchingData){
+    return(
+      <View style={styles.containers}>
+          <Text style={styles.noFound}>Loading data, please wait...</Text>
+      </View>
+    )
+  }
+
+  return (
+    <View style={styles.container}>
+
       {/* Filter */}
       <View style={styles.filterContainer}>
         <Text style={styles.filterText}>Filter by:</Text>
@@ -41,12 +77,17 @@ function CaseListScreen(props) {
         </TouchableOpacity>
       </View>
 
-      {/* List of Cases */}
-      <FlatList
-        data={caseData}
-        renderItem={renderCaseItem}
-        keyExtractor={(item, index) => index.toString()}
-      />
+      {blotterDatas.length === 0 ? (
+        <View style={styles.containers}>
+            <Text style={styles.noFound}>No results found.</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={blotterDatas}
+          renderItem={renderCaseItem}
+          keyExtractor={(item, index) => index.toString()}
+        />
+      )}
     </View>
   );
 }
@@ -95,11 +136,14 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   card: {
-    backgroundColor: "#f7f1f3",
+    backgroundColor: "#fff",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    margin: 10,
+    marginTop: 8,
+    marginBottom: 0,
+    marginLeft: 8,
+    marginRight: 8,
     padding: 15,
     borderRadius: 10,
   },
@@ -127,8 +171,17 @@ const styles = StyleSheet.create({
   dateLabel: {
     fontSize: 12,
     color: "#999",
-    marginTop: 5,
+    marginTop: 3,
   },
+  containers: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    noFound: {
+        fontSize: 18,
+        color: '#333',
+    },
 });
 
 export default CaseListScreen;

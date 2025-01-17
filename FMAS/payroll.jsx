@@ -59,79 +59,78 @@ export default function Payroll() {
     (selectedPosition ? item.official_position === selectedPosition : true)
   );
 
-   //Printing Preview
-   const printPayroll = async () => {
-    if (filteredData.length === 0) {
-      alert('No data available to print.');
-      return;
-    }
-
-  const htmlTable = `
-      <html>
-        <head>
-          <style>
-            table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-            th, td {
-              border: 1px solid #ddd;
-              padding: 15px;
-              text-align: left;
-            }
-            th {
-              background-color: #710808;
-              color: white;
-            }
-            h2 {
-            text-align: center;
-            padding-top: 15px;
-            }
-          </style>
-        </head>
-        <body>
-          <h2>Payroll Data</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Official Position</th>
-                <th>Compensation</th>
-                <th>Salary</th>
-                <th>Deduction</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredData
-                .map(item => `
-                  <tr>
-                    <td>${item.official_position || 'N/A'}</td>
-                    <td>${item.compensation || 'N/A'}</td>
-                    <td>${item.salary || 'N/A'}</td>
-                    <td>${item.deduction || 'N/A'}</td>
-                    <td>${item.date || 'N/A'}</td>
-                  </tr>
-                `)
-                .join('')}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-
-    try {
-      const file = await printToFileAsync({
-        html: htmlTable,
-        base64: false,
-      });
-
-      console.log('File created at:', file.uri);
-      await printAsync({ uri: file.uri });
-    } catch (error) {
-      console.error('Error printing payroll:', error);
-    }
-  };
-
+    //Printing Preview
+    const printPayroll = async () => {
+      if (filteredData.length === 0) {
+        alert('No data available to print.');
+        return;
+      }
+  
+    const htmlTable = `
+        <html>
+          <head>
+            <style>
+              table {
+                width: 100%;
+                border-collapse: collapse;
+              }
+              th, td {
+                border: 1px solid #ddd;
+                padding: 15px;
+                text-align: left;
+              }
+              th {
+                background-color: #710808;
+                color: white;
+              }
+              h2 {
+              text-align: center;
+              padding-top: 15px;
+              }
+            </style>
+          </head>
+          <body>
+            <h2>Payroll Data</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Official Position</th>
+                  <th>Compensation</th>
+                  <th>Salary</th>
+                  <th>Deduction</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredData
+                  .map(item => `
+                    <tr>
+                      <td>${item.official_position || 'N/A'}</td>
+                      <td>${item.compensation || 'N/A'}</td>
+                      <td>${item.salary || 'N/A'}</td>
+                      <td>${item.deduction || 'N/A'}</td>
+                      <td>${item.date || 'N/A'}</td>
+                    </tr>
+                  `)
+                  .join('')}
+              </tbody>
+            </table>
+          </body>
+        </html>
+      `;
+  
+      try {
+        const file = await printToFileAsync({
+          html: htmlTable,
+          base64: false,
+        });
+  
+        console.log('File created at:', file.uri);
+        await printAsync({ uri: file.uri });
+      } catch (error) {
+        console.error('Error printing payroll:', error);
+      }
+    };  
 
   return (
     <View style={styles.container}>
@@ -188,17 +187,18 @@ export default function Payroll() {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => navigation?.navigate('payrolladd')}>
+          onPress={() => navigation?.navigate('Payroll Add')}>
           <Text style={styles.addButtonText}>Add Payroll</Text>
         </TouchableOpacity>
       </View>
 
       {/* Print */}            
       <View style={styles.buttonContainer}>
-      <TouchableOpacity style={styles.addButton} onPress={printPayroll}>
-      <Icon name="print" size={20} color="#fff" />
-      <Text style={styles.addButtonText}>Print</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.printButton} onPress={printPayroll}>
+          <Icon name="print" size={20} color="#fff" />
+          <Text style={styles.addButtonText}>Print</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -210,43 +210,67 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     padding: 20,
   },
-  yearPickerContainer: {
-    flexDirection: 'row',
+  yearPickerContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    marginBottom: 20, 
+    alignItems: 'center', 
     marginBottom: 20,
-    marginLeft: 5,
-    marginRight: 5,
-    backgroundColor: '#710808',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#710808', 
+    width: '100%', 
+    height: 60, 
   },
-  yearPickerLabel: {
-    fontSize: 16,
-    marginLeft: 50,
-    color: '#fff',
+  yearPickerLabel: { 
+    fontSize: 16, 
+    color: '#710808', 
+    fontWeight: 'bold', 
     flex: 1,
-    textAlign: 'center',
+
   },
   positionPickerContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    marginBottom: 20, 
+    alignItems: 'center', 
     marginBottom: 20,
-    marginLeft: 5,
-    marginRight: 5,
-    backgroundColor: '#710808',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#710808', 
+    width: '100%', 
+    height: 60, 
   },
   positionPickerLabel: {
-    fontSize: 16,
-    marginLeft: 50,
-    color: '#fff',
+    fontSize: 16, 
+    color: '#710808', 
+    fontWeight: 'bold', 
     flex: 1,
-    textAlign: 'center',
+
   },
+  pickerRightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 2,
+    justifyContent: 'flex-end',
+  },
+
+  selectedItem: {
+    fontSize: 16,
+    color: '#710808',
+    fontWeight: 'bold',
+    marginRight: 10,
+  },
+
   tableContainer: {
     width: '100%',
     flex: 1,
     marginTop: 10,
-    paddingBottom: 70,
+   
   },
   table: {
     width: '100%',

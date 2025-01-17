@@ -59,19 +59,22 @@ const CPending = () => {
                 },
                 body: JSON.stringify({ programId: programId, status: status, reason: reason, programDetails: programDetails }),
             });
-
+    
             if (!response.ok) {
                 throw new Error('Failed to update the program status');
             }
-
+    
             const successMessage = status === 'Approved' ? 'Program has been approved successfully.' : 'Program has been rejected successfully.';
             Alert.alert('Success', successMessage);
-            navigation.navigate('CProposedProgram'); // Navigate back to History screen
+    
+            // Use goBack to navigate back and trigger a re-fetch on the previous screen
+            navigation.goBack(); 
         } catch (error) {
             console.error('Error updating program status:', error);
             setError('Failed to update the program status');
         }
     };
+    
 
     const handleRejectProposal = () => {
         if (rejectReason.trim() === '') {

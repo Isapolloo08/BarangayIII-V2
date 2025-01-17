@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import axios from 'axios'; // Import axios for making HTTP requests
 
 const RequestDocument = () => {
     const [name, setName] = useState('');
@@ -17,6 +18,7 @@ const RequestDocument = () => {
     const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
     const [isSubmitModalVisible, setIsSubmitModalVisible] = useState(false);
     const [error, setError] = useState('');
+    const [requestDocsData, setRequestDocsData] = useState([]);
 
     const navigation = useNavigation();
 
@@ -42,32 +44,74 @@ const RequestDocument = () => {
     };
 
     const resetForm = () => {
+        setName('');
+        setAddress('');
         setDocType('');
         setPurpose('');
         setDateOfClaim(new Date());
         setTimeClaim('');
+        setError('');
     };
 
     const handleSubmit = () => {
-        if (!docType || !purpose || !timeClaim) {
-            setError('All fields are required');
+        if (!name || !address || !docType || !purpose || !timeClaim) {
+            setError('All fields are required.');
             return;
         }
-        setIsSubmitModalVisible(true);
+    
+        const requestData = {
+            name,
+            address,
+            docType,
+            purpose,
+            dateOfClaim: dateOfClaim.toISOString().split('T')[0], // Format as YYYY-MM-DD
+            timeClaim,
+        };
+    
+        axios.post("http://brgyapp.lesterintheclouds.com/RequestsForNewDocuments.php", requestData)
+            .then(response => {
+                if (response.data.success) {
+                    alert('Document request submitted successfully!');
+                    resetForm();
+                } else if (response.data.message === 'Duplicate entry found.') {
+                    alert('This document request already exists.');
+                } else {
+                    alert('Failed to submit the document request. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting document request:', error);
+                alert('An error occurred while submitting the request. Please check your connection and try again.');
+            });
     };
-
-    const handleSubmitConfirmation = (confirm) => {
+    
+    const handleSubmitConfirmation = async (confirm) => {
         setIsSubmitModalVisible(false);
         if (confirm) {
-            navigation.navigate('ConfirmationScreen', {
-                name,
-                address,
-                docType,
-                purpose,
-                dateOfClaim: dateOfClaim.toLocaleDateString(),
-                timeClaim,
-            });
-            resetForm();
+            try {
+                const apiUrl = 'http://brgyapp.lesterintheclouds.com/RequestsForNewDocuments.php';
+
+                const requestData = {
+                    name,
+                    address,
+                    docType,
+                    purpose,
+                    dateOfClaim: dateOfClaim.toISOString().split('T')[0], // Format as YYYY-MM-DD
+                    timeClaim,
+                };
+
+                const response = await axios.post(apiUrl, requestData);
+
+                if (response.data.success) {
+                    alert('Document request submitted successfully!');
+                    resetForm();
+                } else {
+                    alert('Failed to submit the document request. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error submitting document request:', error);
+                alert('An error occurred while submitting the request. Please check your connection and try again.');
+            }
         }
     };
 
@@ -79,6 +123,7 @@ const RequestDocument = () => {
     today.setHours(0, 0, 0, 0);
 
     const onDateChange = (event, selectedDate) => {
+        setShowDatePicker(false);
         if (selectedDate) {
             if (selectedDate >= today) {
                 setDateOfClaim(selectedDate);
@@ -86,19 +131,20 @@ const RequestDocument = () => {
                 alert('Please select a date today or in the future.');
             }
         }
-        setShowDatePicker(false);
     };
-    
 
-    const navigateToListOfRequestDocx = () => {
-        const requestDocsData = [
-            { name: 'John Doe', docType: 'Barangay ID', date: '2024-07-20', status: 'pending' },
-            { name: 'Jane Smith', docType: 'Certificate of Indigency', date: '2024-07-19', status: 'claimed' },
-            { name: 'Michael Johnson', docType: 'Barangay Clearance', date: '2024-07-18', status: 'printing' },
-            { name: 'Alex Mendez', docType: 'Business Permit', date: '2024-07-19', status: 'payment' },
-            { name: 'Fourth Vergara', docType: 'Barangay Certificate', date: '2024-07-18', status: 'unclaimed' },
-        ];
+    const fetchRequestDocuments = async () => {
+        try {
+            const response = await axios.get('http://brgyapp.lesterintheclouds.com/fetchRequestsForNewDocuments.php');
+            setRequestDocsData(response.data);
+        } catch (error) {
+            console.error('Error fetching request documents', error);
+            alert('Failed to load request documents.');
+        }
+    };
 
+    const navigateToListOfRequestDocx = async () => {
+        await fetchRequestDocuments();
         navigation.navigate('ListOfRequestDocx', { requests: requestDocsData });
     };
 
@@ -106,13 +152,13 @@ const RequestDocument = () => {
         <View style={styles.container}>
             <KeyboardAwareScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.buttonListContainer}>
-                    <TouchableOpacity 
-                        style={styles.listButton} 
+ <TouchableOpacity
+                        style={styles.listButton}
                         onPress={navigateToListOfRequestDocx}>
                         <Text style={styles.listButtonText}>View List of Request Documents</Text>
                     </TouchableOpacity>
                 </View>
-                    <View style={styles.background}>
+                <View style={styles.background}>
                     <View style={styles.box}>
                         <View style={styles.inputContainer}>
                             <Text>Name:</Text>
@@ -183,7 +229,7 @@ const RequestDocument = () => {
                                     mode="date"
                                     display="default"
                                     onChange={onDateChange}
-                                    minimumDate={today} // Prevent selecting past dates
+                                    minimumDate={today}
                                 />
                             )}
                         </View>
@@ -203,7 +249,7 @@ const RequestDocument = () => {
                                 <View style={styles.modalBackground}>
                                     <View style={styles.modalContainer}>
                                         <FlatList
-                                            data={['8:00 am', '9:00 am', '10:00 am', '1:00 pm','2:00 pm', '3:00 pm','4:00 pm']}
+                                            data={['8:00 am', '9:00 am', '10:00 am', '1:00 pm', '2:00 pm', '3:00 pm', '4:00 pm']}
                                             renderItem={({ item }) => (
                                                 <TouchableOpacity
                                                     style={styles.dropdownItem}
@@ -229,55 +275,10 @@ const RequestDocument = () => {
                         </View>
                     </View>
                 </View>
-                <Modal
-                    transparent={true}
-                    visible={isSubmitModalVisible}
-                    onRequestClose={() => setIsSubmitModalVisible(false)}
-                >
-                    <View style={styles.modalBackground}>
-                        <View style={styles.modalContainer}>
-                            <Text style={styles.modalText}>Your request has been submitted successfully!</Text>
-                            <View style={styles.modalButtonContainer}>
-                                <TouchableOpacity
-                                    style={[styles.modalButton, { backgroundColor: '#4CAF50' }]}
-                                    onPress={() => handleSubmitConfirmation(true)}
-                                >
-                                    <Text style={styles.modalButtonText}>Proceed</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                </Modal>
-                <Modal
-                    transparent={true}
-                    visible={isCancelModalVisible}
-                    onRequestClose={() => setIsCancelModalVisible(false)}
-                >
-                    <View style={styles.modalBackground}>
-                        <View style={styles.modalContainer}>
-                            <Text style={styles.modalText}>Are you sure you want to cancel?</Text>
-                            <View style={styles.modalButtonContainer}>
-                                <TouchableOpacity
-                                    style={[styles.modalButton, { backgroundColor: '#FF0000' }]}
-                                    onPress={() => handleCancelConfirmation(true)}
-                                >
-                                    <Text style={styles.modalButtonText}>Yes</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.modalButton, { backgroundColor: '#4CAF50' }]}
-                                    onPress={() => handleCancelConfirmation(false)}
-                                >
-                                    <Text style={styles.modalButtonText}>No</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                </Modal>
             </KeyboardAwareScrollView>
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,

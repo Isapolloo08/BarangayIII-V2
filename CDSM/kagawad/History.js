@@ -136,7 +136,7 @@ const History = () => {
     return (
         <View style={styles.container}>
             <View style={styles.tabs}>
-                {['Pending', 'Approved', 'Rejected'].map(tab => (
+                {['Pending'].map(tab => (
                     <TouchableOpacity
                         key={tab}
                         style={[styles.tab, selectedTab === tab && styles.activeTab]}

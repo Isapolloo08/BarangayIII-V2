@@ -16,8 +16,8 @@ const toValidNumber = (value) => {
   return isNaN(number) ? 0 : number;
 };
 
-const SFunds = ({ route }) => {
-  const { year, totalBudget } = route.params; // Get the year and total budget
+const CFunds = ({ route }) => {
+  const { year, totalBudget = 0 } = route.params; // Ensure totalBudget has a default value
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -268,4 +268,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SFunds;
+export default CFunds;

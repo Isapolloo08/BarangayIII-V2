@@ -67,7 +67,7 @@ const CustomDrawerContent = (props) => {
             <View style={styles.subMenu}>
               <TouchableOpacity
                 onPress={() => navigation.navigate('RequestDocument')}
-                style={[styles.drawerSubItem, enableForRoles(['resident']) ? null : styles.disabledItem]}
+                style={[styles.drawerSubItem, enableForRoles(['resident', 'treasurer']) ? null : styles.disabledItem]}
                 disabled={!enableForRoles(['resident', 'treasurer'])}
               >
                 <Text style={[styles.drawerSubItemText, !enableForRoles(['resident', 'treasurer']) && styles.disabledItemText]}>
@@ -128,15 +128,15 @@ const CustomDrawerContent = (props) => {
                   Reports
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 onPress={() => navigation.navigate('ServiceRecord')}
-                style={[styles.drawerSubItem, enableForRoles([]) ? null : styles.disabledItem]}
-                disabled={!enableForRoles([])}
+                style={[styles.drawerSubItem, enableForRoles(['resident']) ? null : styles.disabledItem]}
+                disabled={!enableForRoles(['resident'])}
               >
                 <Text style={[styles.drawerSubItemText, !enableForRoles(['resident']) && styles.disabledItemText]}>
                   Service Record
                 </Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           )}
           <TouchableOpacity
@@ -201,7 +201,7 @@ const CustomDrawerContent = (props) => {
             <Icon name={expandedItems.includes('Incident Report') ? 'up' : 'down'} size={24} color="white" />
           </TouchableOpacity>
           {expandedItems.includes('Incident Report') && (
-            <View style={styles.subMenu}>
+            <View style={styles.subSubMenu}>
               <TouchableOpacity 
               onPress={() => props.navigation.navigate('BlotterForm')} 
               style={[styles.drawerSubItem, disableForRoles(['resident', 'kagawad', 'secretary', 'kapitan']) && styles.disabledItem]}
@@ -218,27 +218,35 @@ const CustomDrawerContent = (props) => {
               </TouchableOpacity>
               <TouchableOpacity 
                 onPress={() => props.navigation.navigate('CaseList')} 
-                style={[styles.drawerSubItem, disableForRoles([ 'kagawad', 'secretary', 'kapitan']) && styles.disabledItem]}
-                  disabled={disableForRoles([ 'kagawad', 'secretary', 'kapitan'])}>
+                style={[styles.drawerSubItem, disableForRoles([ 'resident']) && styles.disabledItem]}
+                  disabled={disableForRoles([ 'resident'])}>
                 <Awsome6 name={'table-list'} size={24} color="white" />
                   <Text style={styles.drawerSubItemText}>Case List</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-              onPress={() => props.navigation.navigate('CaseReport')} 
-              style={[styles.drawerSubItem, disableForRoles(['resident', 'kagawad', 'secretary', 'kapitan']) && styles.disabledItem]}
-                disabled={disableForRoles(['resident', 'kagawad', 'secretary', 'kapitan'])}>
-              <Matcommunity name={'briefcase-edit-outline'} size={24} color={'white'}/>
-                <Text style={styles.drawerSubItemText}>Case Report</Text>
+                onPress={() => props.navigation.navigate('BlotterCalendar')} 
+                style={[styles.drawerSubItem, disableForRoles([ 'kagawad', 'secretary', 'kapitan']) && styles.disabledItem]}
+                  disabled={disableForRoles([ 'kagawad', 'secretary', 'kapitan'])}>
+                <Awsome6 name={'table-list'} size={24} color="white" />
+                  <Text style={styles.drawerSubItemText}>Blotter Calendar</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              {/* <TouchableOpacity 
+                onPress={() => props.navigation.navigate('IncidentReport')} 
+                style={[styles.drawerSubItem, disableForRoles([ 'kagawad', 'secretary', 'kapitan']) && styles.disabledItem]}
+                  disabled={disableForRoles([ 'kagawad', 'secretary', 'kapitan'])}>
+                <Awsome6 name={'table-list'} size={24} color="white" />
+                  <Text style={styles.drawerSubItemText}>Incident Report</Text>
+              </TouchableOpacity> */}
+              
+              {/* <TouchableOpacity 
               onPress={() => props.navigation.navigate('SummonSchedule')} 
               style={[styles.drawerSubItem, disableForRoles(['secretary', 'kapitan']) && styles.disabledItem]}
                 disabled={disableForRoles(['secretary', 'kapitan'])}>
                 <Material name={'schedule'} size={24} color={'white'} /> 
                 <Text style={styles.drawerSubItemText}>Summon Schedule/{'\n'}Calendar</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               <TouchableOpacity 
-              onPress={() => props.navigation.navigate('Notification_IRCM')} 
+              onPress={() => props.navigation.navigate('Notification')} 
               style={[styles.drawerSubItem, disableForRoles(['resident', 'secretary', 'kapitan']) && styles.disabledItem]}
                 disabled={disableForRoles(['resident', 'secretary', 'kapitan'])}>
                 <Material name={'schedule'} size={24} color={'white'} /> 
@@ -257,7 +265,12 @@ const CustomDrawerContent = (props) => {
           </TouchableOpacity>
           {expandedItems.includes('Community Development') && (
             <View style={styles.subMenu}>
-              
+              {/* <TouchableOpacity 
+              onPress={() => props.navigation.navigate('Dashboard')} 
+              style={[styles.drawerSubItem, disableForRoles(['kapitan']) && styles.disabledItem]}
+                disabled={disableForRoles(['kapitan'])}>
+                <Text style={styles.drawerSubItemText}>Dashboard</Text>
+              </TouchableOpacity> */}
               <TouchableOpacity 
                 onPress={() => toggleNestedSubMenu('Program Planning and Scheduling')} 
                 style={[styles.drawerSubItem, disableForRoles(['kagawad', 'secretary', 'kapitan']) && styles.disabledItem]}
@@ -270,8 +283,8 @@ const CustomDrawerContent = (props) => {
               <View style={styles.subSubMenu}>
                 <TouchableOpacity 
                 onPress={() => props.navigation.navigate('Calendar')} 
-                style={[styles.drawerSubItem, disableForRoles(['kagawad', 'secretary', 'kapitan']) && styles.disabledItem]}
-                disabled={disableForRoles(['kagawad', 'secretary', 'kapitan'])}>
+                style={[styles.drawerSubItem, disableForRoles(['secretary', 'kapitan']) && styles.disabledItem]}
+                disabled={disableForRoles(['secretary', 'kapitan'])}>
                   <Text style={styles.drawernestedSubItemText}>Calendar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
@@ -289,7 +302,7 @@ const CustomDrawerContent = (props) => {
                 <TouchableOpacity 
                 onPress={() => props.navigation.navigate('Approved Program')} 
                 style={[styles.drawerSubItem, disableForRoles(['kagawad', 'secretary', 'kapitan']) && styles.disabledItem]}
-                disabled={disableForRoles(['kagawad', 'secretary', 'kapitan'])}>
+                disabled={disableForRoles(['kapitan'])}>
                   <Text style={styles.drawernestedSubItemText}>Pending Programs</Text>
                 </TouchableOpacity>
               </View>
@@ -320,7 +333,7 @@ const CustomDrawerContent = (props) => {
               </TouchableOpacity>
             </View>
           )}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={() => toggleSubMenu('Administrator')}
             style={styles.drawerItem}
           >
@@ -349,7 +362,7 @@ const CustomDrawerContent = (props) => {
                 <Text style={styles.drawerSubItemText}>Iniisip palang</Text>
               </TouchableOpacity>
             </View>
-          )}
+          )} */}
         </View>
       </DrawerContentScrollView>
       <View style={{ borderTopWidth: 1, borderTopColor: '#fff', padding: 15 }}>

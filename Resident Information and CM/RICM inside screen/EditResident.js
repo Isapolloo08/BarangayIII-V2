@@ -1,46 +1,47 @@
 import React, { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 
 const EditResident = ({ route, navigation }) => {
     const { resident } = route.params;
     const [editedResident, setEditedResident] = useState({ ...resident });
 
-    const handleSave = () => {
-      // Save edited resident data
-      saveEditedResident(editedResident);
-      // Navigate to details screen with updated resident data
-      navigation.navigate('ResidentDetails', { resident: editedResident });
+    const handleSave = async () => {
+      try {
+        const response = await saveEditedResident(editedResident);
+        if (response.status === 'success') {
+          Alert.alert("Success", "Resident updated successfully", [
+            {
+              text: "OK",
+              onPress: () => navigation.navigate('ResidentDetails', { resident: editedResident }),
+            },
+          ]);
+        } else {
+          throw new Error(response.message);
+        }
+      } catch (error) {
+        Alert.alert("Error", error.message || "Failed to update resident");
+      }
     };
 
     const handleChange = (key, value) => {
-      // Update edited resident data
       setEditedResident({
         ...editedResident,
         [key]: value,
       });
     };
 
-    // Function to save edited resident data
-    const saveEditedResident = (updatedResident) => {
-      // Log changes to ResidentHistory
-      logResidentHistory(resident, updatedResident);
-      // Update the resident data in your data store (state management or backend)
-      // Here you would implement the logic to save the updatedResident data to your data store
-    };
+    // Function to save edited resident data using API
+    const saveEditedResident = async (updatedResident) => {
+      const response = await fetch('http://brgyapp.lesterintheclouds.com/updateResident.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedResident),
+      });
 
-    // Function to log changes to ResidentHistory
-    const logResidentHistory = (originalResident, updatedResident) => {
-      const changes = {};
-      for (const key in originalResident) {
-        if (originalResident[key] !== updatedResident[key]) {
-          changes[key] = {
-            oldValue: originalResident[key],
-            newValue: updatedResident[key],
-          };
-        }
-      }
-      // Here you would implement the logic to save the changes to your ResidentHistory data store
-      console.log('Logged changes to ResidentHistory:', changes);
+      const result = await response.json();
+      return result;
     };
 
     // Function to render editable or non-editable fields
@@ -191,6 +192,6 @@ const EditResident = ({ route, navigation }) => {
       color: '#fff',
       fontSize: 18,
     },
-});
+  });
 
 export default EditResident;
